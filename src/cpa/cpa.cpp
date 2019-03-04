@@ -212,7 +212,7 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	// Report the key
 	std::cout<<"\nKey is ";
 	for (unsigned int i = 0; i < full_key.size(); i++)
-		std::cout<< static_cast<int> (full_key.at(i)) <<", ";
+		std::cout<< static_cast<int> (full_key.at(i)) <<" ";
 
 	std::cout<<"\n\n";
 }
