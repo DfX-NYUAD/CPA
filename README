@@ -1,0 +1,80 @@
+
+
+------------------------------------------------------------------------------
+               		Side Channel Analysis Tool 
+------------------------------------------------------------------------------
+
+The Side Channel Analysis Tool is an open source tool written in C++ that
+allows the user to recover encryption keys from leakage data obtained through
+some form of Side Channel Analysis. Currently only Correlation Power Analysis (CPA)
+for the AES-128 encryption algorithm is supported but we hope to continue supporting
+and expanding the range of analysis and encryption algorithms for the future.
+
+
+------------------------------------------------------------------------------
+            		     Build Instructions 
+------------------------------------------------------------------------------
+
+The Side Channel Analysis Tool has several dependencies that must be installed
+before use:
+
+	(1) CMake - CMake is a family of tools used to simplify the compilation
+		process. The minimum required version of CMake for the SCA Tool 
+		is 2.8
+
+	(2) OpenMP - OpenMP is an API that allows for multithreading and
+		is used througout the tool to speed certain processes.
+
+After both dependencies are installed the tool can be built. In the top level
+directory there is an empty directory labelled 'build'. This is the recommended
+location to launch the CMake build process to avoid cluttering the source files.
+Note that building in a different location will cause problems for the GPU algorithm
+since the executable needs to know the location of the OpenCL kernel at runtime.
+The following commands will build the tool:
+
+	(1) cd build
+	
+	(2) cmake ../src
+	
+	(3) make
+
+After step 2, cmake will configure the makefiles required for building the project.
+At this point, cmake will search for the OpenCL shared library as well as the 
+necessary OpenCL headers required to compile the GPU-based algorithms. If these are 
+not found, the tool will only build the CPU-based algorithms. After step 3, the
+user should have an executable file labelled 'sca' which will be used to invoke
+the analysis algorithms.
+
+
+------------------------------------------------------------------------------
+      	        		    Usage 
+------------------------------------------------------------------------------
+
+Once built, the Side Channel Anlysis tool has three different command line flags
+available:
+	
+	(1) '-d' - The argument following this flag specifies the data file with the 
+			power leakage traces. This argument is mandatory.
+
+	(2) '-t' - The argument following this flag specifies the ciphertext file
+			associated with the provided data file. This argument is 
+			mandatory
+
+	(3) '-p' - When this flag is specified the GPU-based CPA algorithm will be
+			invoked instead of the CPU-based algorithm. This can provide
+			a performance increase for large sets of data.
+
+
+Usage of the CPU-based CPA algorithm:
+
+	./sca -d <path/to/power/traces> -t <path/to/ciphertext>
+
+Usage of the GPU-based CPA algorithm:
+
+	./sca -d <path/to/power/traces> -t <path/to/ciphertext> -p
+
+
+In the directory labelled 'data', 3000 power traces collected from a SASEBO-GII FPGA
+are provided to test the Side Channel Analysis Tool.
+
+------------------------------------------------------------------------------
