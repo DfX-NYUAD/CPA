@@ -30,42 +30,31 @@
 
 void csv::split_string(std::string str, std::vector<float>& out)
 {
-	float val;
-	size_t pos;
-	int start;
 	std::string tmp;
+	std::istringstream linestream(str);
+	float val;
 	
-	start = 0;
-	pos = str.find(" ");
 
-	while(pos != str.npos)
-	{
-		tmp = str.substr(start, pos - start);
+	while (!linestream.eof()) {
+		linestream >> tmp;
+
 		val = atof(tmp.c_str());
 		out.push_back(val);
-		start = pos + 1;
-		pos = str.find(" ", start);
 	}
 }
 
 void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 {
-	float val;
-	size_t pos;
-	int start;
 	std::string tmp;
-	
-	start = 0;
-	pos = str.find(" ");
+	std::istringstream linestream(str);
+	float val;
 
-	while(pos != str.npos)
-	{
-		tmp = str.substr(start, pos - start);
+	while (!linestream.eof()) {
+		linestream >> tmp;
+
 		tmp = "0x" + tmp;
 		val = atof(tmp.c_str());
 		out.push_back(val);
-		start = pos + 1;
-		pos = str.find(" ", start);
 	}
 }
 
