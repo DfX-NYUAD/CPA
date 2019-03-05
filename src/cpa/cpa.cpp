@@ -111,10 +111,10 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		//
 		// search the whole trace
 		trace_start = 0;
-		max_pt = -1.0f * data.at(i).at(trace_start);		
+		max_pt = 0.0f;
 		for (unsigned int j = trace_start; j < num_pts; j++)
 		{
-			data_pt = -1.0f * data.at(i).at(j);
+			data_pt = data.at(i).at(j);
 			if (max_pt < data_pt)
 				max_pt = data_pt;
 		}
