@@ -46,7 +46,6 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 
 	size_t num_traces;
 	size_t num_pts;
-	size_t round_size;
 	size_t trace_start;
 
 	float max_pt;
@@ -81,12 +80,6 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	num_traces = data.size();
 	num_pts = data.at(0).size();
 
-	// Calcute a rough size of an AES round
-	// and mark a point to start looking for a
-	// maximum power
-	round_size = num_pts / 5;
-	trace_start = num_pts - round_size;
-
 	// Prepare main vectors
 	std::cout<<"Allocating memory...\n";
 	std::vector< std::vector<float> > r_pts ( 16, std::vector<float> (256, 0.0f) );
@@ -115,6 +108,9 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		}
 
 		// Use the maximum power point for the leakage point
+		//
+		// search the whole trace
+		trace_start = 0;
 		max_pt = -1.0f * data.at(i).at(trace_start);		
 		for (unsigned int j = trace_start; j < num_pts; j++)
 		{
