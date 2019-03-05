@@ -210,9 +210,9 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	aes::inv_key_expand(round_key, full_key);
 
 	// Report the key
-	std::cout<<"\nKey is ";
+	std::cout<<"\nKey in hex is ";
 	for (unsigned int i = 0; i < full_key.size(); i++)
-		std::cout<< static_cast<int> (full_key.at(i)) <<" ";
+		std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
 
 	std::cout<<"\n\n";
 }
