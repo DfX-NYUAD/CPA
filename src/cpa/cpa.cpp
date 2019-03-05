@@ -56,6 +56,8 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	unsigned char key_byte;
 	unsigned char max_byte;
 
+	std::vector<float> max_correlation;
+
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
 	std::vector< std::vector<unsigned char> > ciphertext;
@@ -181,6 +183,8 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 				max_index = j;
 		}
 		
+		max_correlation.push_back(r_pts.at(i).at(max_index));
+
 		max_byte = static_cast<unsigned char> (max_index);
 		round_key.at(i) = max_byte;
 	}
@@ -192,6 +196,12 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	std::cout<<"Key in hex is ";
 	for (unsigned int i = 0; i < full_key.size(); i++)
 		std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
+	std::cout<<"\n";
+
+	// Report the related correlation values
+	std::cout<<"Related Pearson correlation values are ";
+	for (unsigned int i = 0; i < full_key.size(); i++)
+		std::cout << max_correlation.at(i) << " ";
 
 	std::cout<<"\n\n";
 }
