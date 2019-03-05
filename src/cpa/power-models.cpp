@@ -21,7 +21,7 @@
 
 #include "power-models.hpp"
 
-int pm::hamming_dist(int num1, int num2, int bits)
+int pm::Hamming_dist(int num1, int num2, int bits)
 {
         int x;
 	int ham_dist;

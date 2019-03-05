@@ -56,8 +56,6 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	unsigned char key_byte;
 	unsigned char max_byte;
 
-	clock_t t = 0;
-
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
 	std::vector< std::vector<unsigned char> > ciphertext;
@@ -81,15 +79,12 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	num_pts = data.at(0).size();
 
 	// Prepare main vectors
-	std::cout<<"Allocating memory...\n";
+	std::cout<<"Allocating memory...\n\n";
 	std::vector< std::vector<float> > r_pts ( 16, std::vector<float> (256, 0.0f) );
 	std::vector<float> power_pts (num_traces, 0.0f);
-	std::vector< std::vector< std::vector<float> > > hamming_pts 
+	std::vector< std::vector< std::vector<float> > > Hamming_pts 
 		( 16, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
-
-	// Start clock
-	t = clock();
 
 	// Find the power leakage points
 	for (unsigned int i = 0; i < num_traces; i++)
@@ -104,7 +99,7 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		else
 		{
 			std::cout<<"Finding Hamming distances and power points on trace "
-				<<i + 1<<" of "<<num_traces<<"\n";
+				<<i + 1<<" of "<<num_traces<<"\n\n";
 		}
 
 		// Use the maximum power point for the leakage point
@@ -121,15 +116,10 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	
 		power_pts.at(i) = max_pt;
 	}
+
+	std::cout<<"Calculate Hamming distances...\n\n";
 			
-	// Report time
-	t = clock() - t;
-	std::cout<<"\nThe power points selection took "<<(float(t)) / CLOCKS_PER_SEC << " seconds\n";
-
-	// Start clock
-	t = clock();
-
-	// Calcuate hamming distances
+	// Calculate Hamming distances
 	for (unsigned int i = 0; i < num_traces; i++)
 	{
 		// Get cipher for this particular trace
@@ -137,7 +127,7 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 			for (int k = 0; k < 4; k++)
 				cipher.at(k).at(j) = ciphertext.at(i).at(j * 4 + k);
 
-		// Find ciphertext bytes at different stages for the hamming 
+		// Find ciphertext bytes at different stages for the Hamming 
 		// distance calculation
 		for (int j = 0; j < num_bytes; j++)
 		{
@@ -158,20 +148,15 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 				pre_byte = aes::inv_sub_bytes(pre_byte);
 				byte_id = pre_col * 4 + pre_row;
 			
-				// Find the hamming distance between the bytes
-				hamming_pts.at(byte_id).at(k).at(i) = pm::hamming_dist(pre_byte, post_byte, 8);
+				// Find the Hamming distance between the bytes
+				Hamming_pts.at(byte_id).at(k).at(i) = pm::Hamming_dist(pre_byte, post_byte, 8);
 			}
 		}
 	}
 
-	// Report time
-	t = clock() - t;
-	std::cout<<"\nThe hamming distance calculation took "<<(float(t)) / CLOCKS_PER_SEC << " seconds\n";
-	
-	// Start clock	
-	t = clock();
+	std::cout<<"Calculate Pearson correlation...\n\n";
 
-	// Perform Pearson r correlation to find the hamming distance set
+	// Perform Pearson r correlation to find the Hamming distance set
 	// with the highest correlation to the actual data
 	#pragma omp parallel for
 	for (int i = 0; i < num_bytes; i++)
@@ -179,11 +164,13 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		for (int j = 0; j < num_keys; j++)
 		{
 			// Pearson r correlation with power data
-			r_pts.at(i).at(j) = stats::pearsonr(power_pts, hamming_pts.at(i).at(j));
+			r_pts.at(i).at(j) = stats::pearsonr(power_pts, Hamming_pts.at(i).at(j));
 		}
 	}
 
-	// Find the hamming distance set with the highest correlation
+	std::cout<<"Derive the key...\n\n";
+
+	// Find the Hamming distance set with the highest correlation
 	for (int i = 0; i < num_bytes; i++)
 	{
 		max_index = 0;
@@ -198,15 +185,11 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		round_key.at(i) = max_byte;
 	}
 
-	// Report time
-	t = clock() - t;
-	std::cout<<"\nThe Pearson r correlation "<<(float(t)) / CLOCKS_PER_SEC << " seconds\n";
-	
 	// Reverse the AES key scheduling to retrieve the orginal key
 	aes::inv_key_expand(round_key, full_key);
 
 	// Report the key
-	std::cout<<"\nKey in hex is ";
+	std::cout<<"Key in hex is ";
 	for (unsigned int i = 0; i < full_key.size(); i++)
 		std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
 

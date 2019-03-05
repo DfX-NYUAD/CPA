@@ -30,10 +30,10 @@
 namespace pm
 {
 
-// Calculates the hamming distance between two
+// Calculates the Hamming distance between two
 // values and is truncated to a specifed number
 // of bits
-int hamming_dist(int num1, int num2, int bits);
+int Hamming_dist(int num1, int num2, int bits);
 
 }//end namespace
 
