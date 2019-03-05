@@ -23,6 +23,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <functional>
 #include <omp.h>
 
 #include "../common/aes-op.hpp"
@@ -37,7 +39,6 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	const int num_bytes = 16;
 	const int num_keys = 256;	
 	
-	int max_index;	
 	int pre_row;
 	int pre_col;
 	int post_row;
@@ -54,9 +55,6 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	unsigned char pre_byte;
 	unsigned char post_byte;
 	unsigned char key_byte;
-	unsigned char max_byte;
-
-	std::vector<float> max_correlation;
 
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
@@ -64,6 +62,7 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	std::vector<unsigned char> round_key (16);
 	std::vector<unsigned char> full_key (16);
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
+	std::vector<float> max_correlation (16);
 
 	// Print information to terminal
 	std::cout<<"\n\nMethod of Analysis: CPA";
@@ -82,28 +81,20 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 
 	// Prepare main vectors
 	std::cout<<"Allocating memory...\n\n";
-	std::vector< std::vector<float> > r_pts ( 16, std::vector<float> (256, 0.0f) );
+	//std::vector< std::multimap<float, unsigned char, std::greater<float>> > r_pts
+	//	( 16, std::multimap<float, unsigned char, std::greater<float>> () );
+	std::vector< std::multimap<float, unsigned char> > r_pts
+		( 16, std::multimap<float, unsigned char> () );
 	std::vector<float> power_pts (num_traces, 0.0f);
 	std::vector< std::vector< std::vector<float> > > Hamming_pts 
 		( 16, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
 
+	std::cout<<"Determine peak power values...\n\n";
+
 	// Find the power leakage points
 	for (unsigned int i = 0; i < num_traces; i++)
 	{
-		// Print progress to terminal
-		if ( (i + 1) != num_traces )
-		{
-			std::cout<<"Finding Hamming distances and power points on trace "
-				<<i + 1<<" of "<<num_traces<<"\r";
-			std::cout.flush();	
-		}
-		else
-		{
-			std::cout<<"Finding Hamming distances and power points on trace "
-				<<i + 1<<" of "<<num_traces<<"\n\n";
-		}
-
 		// Use the maximum power point for the leakage point
 		//
 		// search the whole trace
@@ -158,51 +149,53 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 
 	std::cout<<"Calculate Pearson correlation...\n\n";
 
-	// Perform Pearson r correlation to find the Hamming distance set
-	// with the highest correlation to the actual data
+	// Perform Pearson r correlation for Hamming distance sets and power data
 	#pragma omp parallel for
 	for (int i = 0; i < num_bytes; i++)
 	{
 		for (int j = 0; j < num_keys; j++)
 		{
 			// Pearson r correlation with power data
-			r_pts.at(i).at(j) = stats::pearsonr(power_pts, Hamming_pts.at(i).at(j));
+			//
+			r_pts.at(i).emplace( std::make_pair(
+						stats::pearsonr(power_pts, Hamming_pts.at(i).at(j)),
+						// keep track of the related key bytes
+						j
+					));
 		}
 	}
 
-	std::cout<<"Derive the key...\n\n";
+	std::cout<<"Derive the key candidates...\n\n";
 
-	// Find the Hamming distance set with the highest correlation
-	for (int i = 0; i < num_bytes; i++)
-	{
-		max_index = 0;
-		
-		for (unsigned int j = 0; j < r_pts.at(i).size(); j++)
-		{
-			if (r_pts.at(i).at(max_index) < r_pts.at(i).at(j))
-				max_index = j;
+	// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by the correlation
+	// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
+	// with all 256 options for key byte 1, etc).
+	//
+	for (int j = 0; j < num_keys; j++) {
+		for (int i = 0; i < num_bytes; i++) {
+
+			auto iter = r_pts.at(i).begin();
+			std::advance(iter, j);
+
+			round_key.at(i) = iter->second;
+			max_correlation.at(i) = iter->first;
 		}
-		
-		max_correlation.push_back(r_pts.at(i).at(max_index));
 
-		max_byte = static_cast<unsigned char> (max_index);
-		round_key.at(i) = max_byte;
+		// Reverse the AES key scheduling to retrieve the original key
+		aes::inv_key_expand(round_key, full_key);
+
+		// Report the key
+		std::cout<<"Key candidate " << std::dec << j << " is (in hex): ";
+		for (unsigned int i = 0; i < full_key.size(); i++)
+			std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
+		std::cout<<"\n";
+
+		// Report the related correlation values
+		std::cout<<"Related Pearson correlation values are: ";
+		for (unsigned int i = 0; i < full_key.size(); i++)
+			std::cout << max_correlation.at(i) << " ";
+
+		std::cout<<"\n\n";
 	}
-
-	// Reverse the AES key scheduling to retrieve the orginal key
-	aes::inv_key_expand(round_key, full_key);
-
-	// Report the key
-	std::cout<<"Key in hex is ";
-	for (unsigned int i = 0; i < full_key.size(); i++)
-		std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
-	std::cout<<"\n";
-
-	// Report the related correlation values
-	std::cout<<"Related Pearson correlation values are ";
-	for (unsigned int i = 0; i < full_key.size(); i++)
-		std::cout << max_correlation.at(i) << " ";
-
-	std::cout<<"\n\n";
 }
 		
