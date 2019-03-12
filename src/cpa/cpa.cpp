@@ -26,6 +26,9 @@
 #include <map>
 #include <functional>
 #include <omp.h>
+#include <chrono>
+#include <random>
+#include <algorithm>
 
 #include "../common/aes-op.hpp"
 #include "../common/csv_read.hpp"
@@ -92,14 +95,22 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 		( 16, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
 
+	// Prepare the permutation of trace data; define a vector with all trace indices which is later on randomly shuffled
+	std::vector<unsigned> trace_indices (num_traces);
+	for (unsigned i = 0; i < num_traces; i++) {
+		trace_indices.at(i) = i;
+	}
+
+	// Obtain a time-based seed
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
 	std::cout<<"Determine peak power values...\n\n";
 
-	// Find the power leakage points
+	// Consider the maximum power point as the leakage point
+	//
+	// search the whole trace
 	for (unsigned int i = 0; i < num_traces; i++)
 	{
-		// Use the maximum power point for the leakage point
-		//
-		// search the whole trace
 		trace_start = 0;
 		max_pt = 0.0f;
 		for (unsigned int j = trace_start; j < num_pts; j++)
@@ -149,9 +160,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 		}
 	}
 
-	std::cout<<"Calculate Pearson correlation...\n\n";
+	std::cout<<"Generate permutation...\n\n";
 
-	// Perform Pearson r correlation for Hamming distance sets and power data
+	shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
+
+	// Perform Pearson r correlation for this permutation Hamming distance sets and power data
+
+	std::cout<<"Calculate Pearson correlation...\n\n";
 	
 	// TODO parallel execution for permutations
 	#pragma omp parallel for
@@ -165,7 +180,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 						// TODO power_pts and Hamming_pts.at(i).at(j) contain the data for all traces
 						// -- for MC sampling, work on permutations of subsets!
 						//
-						stats::pearsonr(power_pts, Hamming_pts.at(i).at(j)),
+						stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, num_traces),
 						// keep track of the related key bytes
 						j
 					));

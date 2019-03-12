@@ -36,14 +36,14 @@ namespace stats
 float max_in_range(std::vector<float>& vec, unsigned int start, unsigned int range);
 
 // Calculates the mean of a given vector
-float mean(std::vector<float>& vec);
+float mean(std::vector<float>& vec, std::vector<unsigned>& indices, int elements);
 
 // Calculates the sum of squares of a given vector
 float sum_of_squares(std::vector<float>& vec);
 
 // Calculates the pearson product-moment correlation coefficient
 // of two equally sized vectors
-float pearsonr(std::vector<float>& a, std::vector<float>& b);
+float pearsonr(std::vector<float>& a, std::vector<float>& b, std::vector<unsigned>& indices, int elements);
 
 // Calculates the variance of a given vector
 float var(std::vector<float>& vec);

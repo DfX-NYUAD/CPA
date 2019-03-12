@@ -25,61 +25,33 @@
 
 #include "stats.hpp"
 
-float stats::max_in_range(std::vector<float>& vec, unsigned int start, unsigned int range)
-{
-	float max_pt;
-
-	max_pt = vec.at(start);
-
-	for (unsigned int i = start; i < (start + range); i++)
-	{
-		if (max_pt < vec.at(i))
-			max_pt = vec.at(i);
-	} 
-
-	return max_pt;
-}
-
-float stats::mean(std::vector<float>& vec)
+float stats::mean(std::vector<float>& vec, std::vector<unsigned>& indices, int elements)
 {
 	float sum;
 	float mean;
-	int n;
 
-	n = vec.size();
 	sum = 0;
 
-	for (int i = 0; i < n; i++)
-		sum += vec.at(i);
+	for (int i = 0; i < elements; i++)
+		sum += vec.at(indices[i]);
 
-	mean = sum / vec.size();
+	mean = sum / elements;
 
 	return mean;
 }
 
-float stats::sum_of_squares(std::vector<float>& vec)
-{
-	
-	float sum;
-	int n;
-
-	n = vec.size();
-	sum = 0;
-
-	for (int i = 0; i < n; i++)
-		sum += (vec.at(i) * vec.at(i));
-
-	return sum;
-}
-
-float stats::pearsonr(std::vector<float>& a, std::vector<float>& b)
+// Only work on the first "elements" indices for both a, b
+// For example, a[indices[0]], a[indices[1]], ..., a[indices[elements - 1]]
+float stats::pearsonr(std::vector<float>& a, std::vector<float>& b, std::vector<unsigned>& indices, int elements)
 {
 	float a_mean;
 	float b_mean;
-	float num;
-	float den;	
-	float result;
-	int n;
+	float cov;
+	float a_dev;
+	float b_dev;
+	float std_dev_a;
+	float std_dev_b;
+	float correlation;
 
 	if (a.size() != b.size())
 	{
@@ -87,46 +59,30 @@ float stats::pearsonr(std::vector<float>& a, std::vector<float>& b)
 		return -2;
 	}
 
-	std::vector<float> am(a.size());
-	std::vector<float> bm(b.size());
+	a_mean = mean(a, indices, elements);
+	b_mean = mean(b, indices, elements);
 
-	a_mean = mean(a);
-	b_mean = mean(b);
+	cov = std_dev_a = std_dev_b = 0;
 
-	n = a.size();
-	num = 0;
-
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < elements; i++)
 	{
-		am.at(i) = a.at(i) - a_mean;
-		bm.at(i) = b.at(i) - b_mean;
+		a_dev = a.at(indices[i]) - a_mean;
+		b_dev = b.at(indices[i]) - b_mean;
 	
-		num += am.at(i) * bm.at(i);
+		cov += a_dev * b_dev;
+
+		std_dev_a += std::pow(a_dev, 2.0);
+		std_dev_b += std::pow(b_dev, 2.0);
 	}
+	cov /= elements;
+	std_dev_a /= elements;
+	std_dev_b /= elements;
 
-	num *= n;
-	den = n * (sqrt ( sum_of_squares(am) * sum_of_squares(bm) ) );
+	std_dev_a = std::sqrt(std_dev_a);
+	std_dev_b = std::sqrt(std_dev_b);
 
-	result = num / den;
-	result = fmax(fmin(result, 1.0f), -1.0f);
+	correlation = cov / (std_dev_a * std_dev_b);
 	
-	return result;
+	return correlation;
 	
 }
-
-float stats::var(std::vector<float>& vec)
-{
-	float sum = 0;
-	float vec_mean = mean(vec);
-	int n = vec.size();
-	
-	for (int i = 0; i < n; i++)
-	{
-		sum += (vec.at(i) - vec_mean)*(vec.at(i) - vec_mean);
-	}
-
-	float variance = sum / (vec.size() - 1);
-	
-	return variance;
-}
-
