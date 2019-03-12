@@ -166,7 +166,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 		int data_pts = num_traces * (steps / 100.0);
 
 		std::cout << "Working on " << std::dec << steps << " percent of all traces...\n";
-		std::cout << " (" << data_pts << " / " << num_traces << ")\n\n";
+		std::cout << "(" << data_pts << " / " << num_traces << ")\n\n";
 
 		// Consider multiple runs, as requested by permutations parameter
 		for (int perm = 1; perm <= permutations; perm++) {
@@ -193,9 +193,9 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 					//
 					r_pts.at(i).emplace( std::make_pair(
 
-								// Note that power_pts and Hamming_pts.at(i).at(j) contain the data for all traces;
-								// only the data points from trace_indices[0] ... trace_indices[data_pts - 1] will
-								// be considered
+								// Note that power_pts and Hamming_pts.at(i).at(j) contain the data for all
+								// traces; only the #data_pts data points from trace_indices[0] ...
+								// trace_indices[data_pts - 1] will be considered
 								stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, data_pts),
 
 								// keep track of the related key byte in the multimap; this allows for easy
@@ -207,12 +207,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 
 			std::cout<<"Derive the key candidates...\n\n";
 
-			// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by the correlation
-			// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
-			// with all 256 options for key byte 1, etc).
+			// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by
+			// the correlation values -- note that this is different from deriving all possible keys (there, one would combine
+			// all 256 options for key byte 0, with all 256 options for key byte 1, etc).
 			//
-			// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one, which is the
-			// last
+			// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one,
+			// which is the last
 			if (candidates) {
 				candidate = 0;
 			}
@@ -245,8 +245,16 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 
 				// Report the related correlation values
 				std::cout<<"Related Pearson correlation values are: ";
-				for (unsigned int i = 0; i < full_key.size(); i++)
+
+				float avg_cor = 0.0;
+				for (unsigned int i = 0; i < full_key.size(); i++) {
 					std::cout << std::dec << max_correlation.at(i) << " ";
+					avg_cor += max_correlation.at(i);
+				}
+				std::cout<<"\n";
+
+				avg_cor /= full_key.size();
+				std::cout<<"Avg Pearson correlation across all bytes: " << avg_cor;
 				std::cout<<"\n";
 
 				std::cout<<"\n";

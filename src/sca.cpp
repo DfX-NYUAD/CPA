@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 
 	// Stop clock and report times
 	t = clock() - t;
-	std::cout<<"The program executed in "<<((float)t)/CLOCKS_PER_SEC<<" seconds\n\n";
+	std::cout<<"The program executed in "<<((float)t)/CLOCKS_PER_SEC<<" CPU seconds\n\n";
 
 	
 	return 0;
