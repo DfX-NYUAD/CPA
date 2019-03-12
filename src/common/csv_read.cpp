@@ -43,6 +43,7 @@ void csv::split_string(std::string str, std::vector<float>& out)
 	}
 }
 
+//TODO assume string is without any spaces, split every byte
 void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 {
 	std::string tmp;

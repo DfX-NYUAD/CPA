@@ -150,6 +150,8 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	std::cout<<"Calculate Pearson correlation...\n\n";
 
 	// Perform Pearson r correlation for Hamming distance sets and power data
+	
+	// TODO parallel execution for permutations
 	#pragma omp parallel for
 	for (int i = 0; i < num_bytes; i++)
 	{
@@ -158,6 +160,9 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 			// Pearson r correlation with power data
 			//
 			r_pts.at(i).emplace( std::make_pair(
+						// TODO power_pts and Hamming_pts.at(i).at(j) contain the data for all traces
+						// -- for MC sampling, work on permutations of subsets!
+						//
 						stats::pearsonr(power_pts, Hamming_pts.at(i).at(j)),
 						// keep track of the related key bytes
 						j
@@ -170,6 +175,9 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by the correlation
 	// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
 	// with all 256 options for key byte 1, etc).
+	//
+	// TODO consider only the most probable key candidate, and compare with correct one; evaluate HD across the key candidate and the
+	// correct key
 	//
 	for (int j = 0; j < num_keys; j++) {
 		for (int i = 0; i < num_bytes; i++) {

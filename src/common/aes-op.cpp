@@ -179,6 +179,7 @@ void key_expand(std::vector<unsigned char>& key_in, std::vector< std::vector<uns
 }
 
 
+// (TODO) make use for double check of guessed key
 void encrypt_text(std::string aes_path)
 {
 	int round;
