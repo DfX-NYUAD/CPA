@@ -34,7 +34,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path)
+void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -55,6 +55,8 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	unsigned char pre_byte;
 	unsigned char post_byte;
 	unsigned char key_byte;
+
+	int candidate;
 
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
@@ -176,14 +178,19 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 	// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
 	// with all 256 options for key byte 1, etc).
 	//
-	// TODO consider only the most probable key candidate, and compare with correct one; evaluate HD across the key candidate and the
-	// correct key
-	//
-	for (int j = 0; j < num_keys; j++) {
+	// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one, which is the
+	// last
+	if (candidates) {
+		candidate = 0;
+	}
+	else {
+		candidate = num_keys - 1;
+	}
+	for (; candidate < num_keys; candidate++) {
 		for (int i = 0; i < num_bytes; i++) {
 
 			auto iter = r_pts.at(i).begin();
-			std::advance(iter, j);
+			std::advance(iter, candidate);
 
 			round_key.at(i) = iter->second;
 			max_correlation.at(i) = iter->first;
@@ -193,7 +200,7 @@ void cpa::cpa(std::string data_path, std::string ct_path)
 		aes::inv_key_expand(round_key, full_key);
 
 		// Report the key
-		std::cout<<"Key candidate " << std::dec << j << " is (in hex): ";
+		std::cout<<"Key candidate " << std::dec << candidate << " is (in hex): ";
 		for (unsigned int i = 0; i < full_key.size(); i++)
 			std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
 		std::cout<<"\n";

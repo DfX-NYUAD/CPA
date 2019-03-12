@@ -46,9 +46,10 @@ int main(int argc, char *argv[])
 					  "or the --help flag. An analysis type can also be specified.\n\n";
 
 	const char* help_msg = "\nOptions:\n\n"
-				"-d   Specify data file\n"
-				"-t   Specify cipher text file\n"
-				"-p   Use parallel analysis (requires GPU)\n"
+				"-d           Specify data file\n"
+				"-t           Specify cipher text file\n"
+				"-candidates  Print all key candidates, ordered by their correlation values\n"
+				"-p           Use parallel analysis (requires GPU)\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
 	int parallel_analysis = 0;
 	int data_path_set = 0;
 	int ct_path_set = 0;
+	int candidates = 0;
 	
 	std::string data_path;
 	std::string ct_path;
@@ -101,6 +103,10 @@ int main(int argc, char *argv[])
 		{
 			parallel_analysis = 1;
 		}
+		else if (!strcmp(argv[i], "-candidates"))
+		{
+			candidates = 1;
+		}
 		else 
 		{
 			std::cerr<<std::endl<<argv[i]<<wrong_input_msg;
@@ -121,7 +127,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path);
+		cpa::cpa(data_path, ct_path, candidates);
 	}
 	else
 	{
