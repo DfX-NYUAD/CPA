@@ -7,17 +7,24 @@
 #fi
 
 echo "Build from scratch? (y/n)"
-read rebuild
+read -n 1 rebuild
+echo ""
+
+echo "Build debug as well? (y/n)"
+read -n 1 debug
+echo ""
 
 # debug build
-mkdir -p build_debug && cd $_
-if [ $rebuild == "y" ]; then
-	rm -r *
-fi
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g" ../src/
-make
+if [ $debug == "y" ]; then
+	mkdir -p build_debug && cd $_
+	if [ $rebuild == "y" ]; then
+		rm -r *
+	fi
+	cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g" ../src/
+	make
 
-cd ../
+	cd ../
+fi
 
 # regular build
 mkdir -p build && cd $_
