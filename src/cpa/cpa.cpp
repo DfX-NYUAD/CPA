@@ -37,7 +37,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
+void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int permutations)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -160,78 +160,89 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 		}
 	}
 
-	std::cout<<"Generate permutation...\n\n";
+	// Consider multiple runs, as requested by permutations parameter
+	for (int perm = 0; perm < permutations; perm++) {
 
-	shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
-
-	// Perform Pearson r correlation for this permutation Hamming distance sets and power data
-
-	std::cout<<"Calculate Pearson correlation...\n\n";
-	
-	// TODO parallel execution for permutations
-	#pragma omp parallel for
-	for (int i = 0; i < num_bytes; i++)
-	{
-		for (int j = 0; j < num_keys; j++)
-		{
-			// Pearson r correlation with power data
-			//
-			r_pts.at(i).emplace( std::make_pair(
-						// TODO power_pts and Hamming_pts.at(i).at(j) contain the data for all traces
-						// -- for MC sampling, work on permutations of subsets!
-						//
-						stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, num_traces),
-						// keep track of the related key bytes
-						j
-					));
-		}
-	}
-
-	std::cout<<"Derive the key candidates...\n\n";
-
-	// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by the correlation
-	// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
-	// with all 256 options for key byte 1, etc).
-	//
-	// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one, which is the
-	// last
-	if (candidates) {
-		candidate = 0;
-	}
-	else {
-		candidate = num_keys - 1;
-	}
-	for (; candidate < num_keys; candidate++) {
+		// reset Pearson correlation multimaps
 		for (int i = 0; i < num_bytes; i++) {
-
-			auto iter = r_pts.at(i).begin();
-			std::advance(iter, candidate);
-
-			round_key.at(i) = iter->second;
-			max_correlation.at(i) = iter->first;
+			r_pts.at(i).clear();
 		}
 
-		// Reverse the AES key scheduling to retrieve the original key
-		aes::inv_key_expand(round_key, full_key);
+		std::cout<<"Generate permutation...\n\n";
 
-		// Report the key
-		std::cout<<"Key candidate " << std::dec << candidate << " is (in hex): ";
-		for (unsigned int i = 0; i < full_key.size(); i++)
-			std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
-		std::cout<<"\n";
+		shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
 
-		std::cout<<"Related round key is (in hex): ";
-		for (unsigned int i = 0; i < round_key.size(); i++)
-			std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
-		std::cout<<"\n";
+		// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
-		// Report the related correlation values
-		std::cout<<"Related Pearson correlation values are: ";
-		for (unsigned int i = 0; i < full_key.size(); i++)
-			std::cout << max_correlation.at(i) << " ";
-		std::cout<<"\n";
+		std::cout<<"Calculate Pearson correlation...\n\n";
 
-		std::cout<<"\n";
+		#pragma omp parallel for
+		for (int i = 0; i < num_bytes; i++)
+		{
+			for (int j = 0; j < num_keys; j++)
+			{
+				// Pearson r correlation with power data
+				//
+				r_pts.at(i).emplace( std::make_pair(
+
+							// Note that power_pts and Hamming_pts.at(i).at(j) contain the data for all traces;
+							// only the data points from trace_indices[0] ... trace_indices[data_pts - 1] will
+							// be considered
+							stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, num_traces),
+
+							// keep track of the related key byte in the multimap; this allows for easy
+							// extraction of the key later on
+							j
+						));
+			}
+		}
+
+		std::cout<<"Derive the key candidates...\n\n";
+
+		// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by the correlation
+		// values -- note that this is different from deriving all possible keys (there, one would combine all 256 options for key byte 0,
+		// with all 256 options for key byte 1, etc).
+		//
+		// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one, which is the
+		// last
+		if (candidates) {
+			candidate = 0;
+		}
+		else {
+			candidate = num_keys - 1;
+		}
+		for (; candidate < num_keys; candidate++) {
+			for (int i = 0; i < num_bytes; i++) {
+
+				auto iter = r_pts.at(i).begin();
+				std::advance(iter, candidate);
+
+				round_key.at(i) = iter->second;
+				max_correlation.at(i) = iter->first;
+			}
+
+			// Reverse the AES key scheduling to retrieve the original key
+			aes::inv_key_expand(round_key, full_key);
+
+			// Report the key
+			std::cout<<"Key candidate " << std::dec << candidate << " is (in hex): ";
+			for (unsigned int i = 0; i < full_key.size(); i++)
+				std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
+			std::cout<<"\n";
+
+			std::cout<<"Related round key is (in hex): ";
+			for (unsigned int i = 0; i < round_key.size(); i++)
+				std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
+			std::cout<<"\n";
+
+			// Report the related correlation values
+			std::cout<<"Related Pearson correlation values are: ";
+			for (unsigned int i = 0; i < full_key.size(); i++)
+				std::cout << max_correlation.at(i) << " ";
+			std::cout<<"\n";
+
+			std::cout<<"\n";
+		}
 	}
 }
 		

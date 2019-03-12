@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	const char* help_msg = "\nOptions:\n\n"
 				"-d           Specify data file\n"
 				"-t           Specify cipher text file\n"
+				"-perm        Specify the number of permutations to consider; if not provided, only 1 is considered\n"
 				"-candidates  Print all key candidates, ordered by their correlation values\n"
 				"-p           Use parallel analysis (requires GPU)\n"
 				"\n\n";
@@ -65,6 +66,8 @@ int main(int argc, char *argv[])
 	int data_path_set = 0;
 	int ct_path_set = 0;
 	int candidates = 0;
+
+	int permutations = 1;
 	
 	std::string data_path;
 	std::string ct_path;
@@ -107,6 +110,11 @@ int main(int argc, char *argv[])
 		{
 			candidates = 1;
 		}
+		else if (!strcmp(argv[i], "-perm"))
+		{
+			permutations = std::stoi(argv[i + 1]);
+			i++;
+		}
 		else 
 		{
 			std::cerr<<std::endl<<argv[i]<<wrong_input_msg;
@@ -127,7 +135,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path, candidates);
+		cpa::cpa(data_path, ct_path, candidates, permutations);
 	}
 	else
 	{
