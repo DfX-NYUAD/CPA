@@ -205,12 +205,18 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates)
 			std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
 		std::cout<<"\n";
 
+		std::cout<<"Related round key is (in hex): ";
+		for (unsigned int i = 0; i < round_key.size(); i++)
+			std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
+		std::cout<<"\n";
+
 		// Report the related correlation values
 		std::cout<<"Related Pearson correlation values are: ";
 		for (unsigned int i = 0; i < full_key.size(); i++)
 			std::cout << max_correlation.at(i) << " ";
+		std::cout<<"\n";
 
-		std::cout<<"\n\n";
+		std::cout<<"\n";
 	}
 }
 		
