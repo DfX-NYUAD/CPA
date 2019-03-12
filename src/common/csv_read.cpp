@@ -43,17 +43,20 @@ void csv::split_string(std::string str, std::vector<float>& out)
 	}
 }
 
-//TODO assume string is without any spaces, split every byte
+//assumes that string is without any spaces; split every byte
 void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 {
+	char byte[2];
 	std::string tmp;
 	std::istringstream linestream(str);
 	float val;
 
 	while (!linestream.eof()) {
-		linestream >> tmp;
 
-		tmp = "0x" + tmp;
+		// reads n-1 = 2 characters
+		linestream.get(byte, 3);
+
+		tmp = std::string("0x" + std::string(byte));
 		val = atof(tmp.c_str());
 		out.push_back(val);
 	}
