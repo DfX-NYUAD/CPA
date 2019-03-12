@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 				"-d           Specify data file\n"
 				"-t           Specify cipher text file\n"
 				"-perm        Specify the number of permutations to consider; if not provided, only 1 is considered\n"
+				"-step        Specify the step size for reducing traces to consider, in percent; if not provided, all traces will be considered\n"
 				"-candidates  Print all key candidates, ordered by their correlation values\n"
 				"-p           Use parallel analysis (requires GPU)\n"
 				"\n\n";
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 	int candidates = 0;
 
 	int permutations = 1;
+	int step_size = 100;
 	
 	std::string data_path;
 	std::string ct_path;
@@ -115,6 +117,11 @@ int main(int argc, char *argv[])
 			permutations = std::stoi(argv[i + 1]);
 			i++;
 		}
+		else if (!strcmp(argv[i], "-step"))
+		{
+			step_size = std::stoi(argv[i + 1]);
+			i++;
+		}
 		else 
 		{
 			std::cerr<<std::endl<<argv[i]<<wrong_input_msg;
@@ -135,7 +142,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path, candidates, permutations);
+		cpa::cpa(data_path, ct_path, candidates, permutations, step_size);
 	}
 	else
 	{
