@@ -38,7 +38,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int steps, int verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, bool candidates, int permutations, int steps, bool steps_stop, bool verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -346,6 +346,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout<<"\n";
 
 		if (!correct_key.empty()) {
+
 			std::cout<<" Success rate: ";
 			std::cout<<"(" << success_rate << " / " << permutations << ") = ";
 			std::cout << (success_rate / permutations) * 100.0 << " %";
@@ -354,6 +355,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout<<" Avg Hamming distance: ";
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
+
+			// abort steps if requested by parameter, but only once success_rate is 100%
+			if (steps_stop && (success_rate / permutations) == 1) {
+				std::cout<<std::endl;
+				break;
+			}
 		}
 		std::cout<<std::endl;
 	}
