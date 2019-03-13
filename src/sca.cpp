@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
 				"-p           Optional: use parallel analysis (requires GPU)\n"
-				"-v           Optional: verbose logging\n"
+				"-nv          Optional: non-verbose logging\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	int data_path_set = 0;
 	int ct_path_set = 0;
 	int candidates = 0;
-	int verbose = 0;
+	int verbose = 1;
 
 	int permutations = 1;
 	int step_size = 100;
@@ -121,9 +121,9 @@ int main(int argc, char *argv[])
 		{
 			candidates = 1;
 		}
-		else if (!strcmp(argv[i], "-v"))
+		else if (!strcmp(argv[i], "-nv"))
 		{
-			verbose = 1;
+			verbose = 0;
 		}
 		else if (!strcmp(argv[i], "-perm"))
 		{
