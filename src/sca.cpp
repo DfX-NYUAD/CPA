@@ -38,21 +38,21 @@ int main(int argc, char *argv[])
 	// Create error messages
 	//
 	// -----------------------------------------------------------------------------------
-	const char* no_input_msg = "\nIn order to use the SCA Tool, please input a data file\n"
-			           "and a cipher text file (in hexadecimal). Use the --help\n"
-			           "flag for more information.\n\n";
+	const char* input_msg = "\nIn order to use the SCA Tool, please provide a power traces data\n"
+			          "file and a cipher texts file (in hexadecimal). Use the --help\n"
+			          "flag for more information.\n\n";
 	
-	const char* wrong_input_num_msg = "\nPlease use one data file and one cipher text file\n"
-					  "or the --help flag. An analysis type can also be specified.\n\n";
-
 	const char* help_msg = "\nOptions:\n\n"
-				"-d           Specify data file\n"
-				"-t           Specify cipher text file\n"
-				"-perm        Specify the number of permutations to consider; if not provided, only 1 is considered\n"
-				"-step        Specify the step size for reducing traces to consider, in percent; if not provided, all traces will be considered\n"
-				"-candidates  Print all key candidates, ordered by their correlation values\n"
-				"-p           Use parallel analysis (requires GPU)\n"
-				"-v           Verbose logging\n"
+				"-d           Mandatory: power traces file\n"
+				"-t           Mandatory: cipher texts file\n"
+				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
+				"                with the highest-correlation candidate coming last\n"
+				"-steps       Optional: specify the steps size for subsets of traces to consider, in percent;\n"
+				"                if not provided, all traces will be considered as one subset\n"
+				"-perm        Optional: specify the number of permutations to explore per subset of traces;\n"
+				"                if not provided, only one permutation is explored per subset\n"
+				"-p           Optional: use parallel analysis (requires GPU)\n"
+				"-v           Optional: verbose logging\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	// Check number of arguments
 	if (argc == 1)
 	{
-		std::cerr<<no_input_msg;
+		std::cerr<<input_msg;
 		return 1;
 	}
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 			permutations = std::stoi(argv[i + 1]);
 			i++;
 		}
-		else if (!strcmp(argv[i], "-step"))
+		else if (!strcmp(argv[i], "-steps"))
 		{
 			step_size = std::stoi(argv[i + 1]);
 			i++;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	// Make sure the user provides a data file and ciphertext file
 	if (!data_path_set || !ct_path_set)
 	{
-		std::cerr<<wrong_input_num_msg;
+		std::cerr<<input_msg;
 		return 1;
 	}
 
