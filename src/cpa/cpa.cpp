@@ -37,7 +37,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int permutations, int step_size, int verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int step_size, int verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -64,20 +64,36 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
 	std::vector< std::vector<unsigned char> > ciphertext;
-	std::vector<unsigned char> round_key (16);
-	std::vector<unsigned char> full_key (16);
+	std::vector< std::vector<unsigned char> > correct_key;
+	std::vector<unsigned char> round_key (num_bytes);
+	std::vector<unsigned char> full_key (num_bytes);
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
-	std::vector<float> max_correlation (16);
+	std::vector<float> max_correlation (num_bytes);
 
 	// Print information to terminal
 	//std::cout<<"\n\nMethod of Analysis: CPA";
 	//std::cout<<"\nUsing GPU: NO";
-	std::cout<<"\nReading data from: "<<data_path;
-	std::cout<<"\nReading ciphertext from: "<<ct_path<<"\n\n";
+	std::cout<<"\n";
+	std::cout<<"Reading data from: "<<data_path;
+	std::cout<<"\n";
+	std::cout<<"Reading ciphertext from: "<<ct_path;
+	std::cout<<"\n";
 
 	// Read in ciphertext and power data
 	csv::read_data(data_path, data);
-	csv::read_cipher(ct_path, ciphertext);
+	csv::read_hex(ct_path, ciphertext);
+
+	// Read in the correct key, if provided 
+	if (key_path != "") {
+
+		std::cout<<"Reading correct key from: " << key_path << ": ";
+
+		csv::read_hex(key_path, correct_key);
+
+		for (unsigned int i = 0; i < full_key.size(); i++)
+			std::cout << std::hex << static_cast<int>(correct_key[0].at(i)) << " ";
+		std::cout<<"\n";
+	}
 
 	// Record the number of traces and the
 	// number of points per trace
@@ -85,14 +101,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 	num_pts = data.at(0).size();
 
 	// Prepare main vectors
+	std::cout<<"\n";
 	std::cout<<"Allocating memory...\n\n";
 	//std::vector< std::multimap<float, unsigned char, std::greater<float>> > r_pts
-	//	( 16, std::multimap<float, unsigned char, std::greater<float>> () );
+	//	( num_bytes, std::multimap<float, unsigned char, std::greater<float>> () );
 	std::vector< std::multimap<float, unsigned char> > r_pts
-		( 16, std::multimap<float, unsigned char> () );
+		( num_bytes, std::multimap<float, unsigned char> () );
 	std::vector<float> power_pts (num_traces, 0.0f);
 	std::vector< std::vector< std::vector<float> > > Hamming_pts 
-		( 16, std::vector< std::vector<float> > 
+		( num_bytes, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
 
 	// Prepare the permutation of trace data; define a vector with all trace indices which is later on randomly shuffled
@@ -165,10 +182,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 
 		int data_pts = num_traces * (steps / 100.0);
 
-		std::cout << "Working on " << std::dec << steps << " percent of all traces...\n";
+		std::cout << "Working on " << std::dec << steps << " % of all traces...\n";
 		std::cout << "(" << data_pts << " / " << num_traces << ")\n\n";
 
 		float overall_avg_cor = 0.0;
+		float success_rate = 0.0;
 
 		// Consider multiple runs, as requested by permutations parameter
 		for (int perm = 1; perm <= permutations; perm++) {
@@ -278,8 +296,20 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 				}
 			} // candidate
 
-			// also track correlation across all permutations, but only for last candidate
+			// track correlation across all permutations, but only for last candidate
 			overall_avg_cor += avg_cor;
+
+			// also track success rate for that last candidate
+			bool success = true;
+			for (unsigned int i = 0; i < full_key.size(); i++) {
+
+				if  (full_key.at(i) != correct_key[0].at(i)) {
+					success = false;
+					break;
+				}
+			}
+			if (success)
+				success_rate += 1;
 
 		} // perm
 
@@ -287,6 +317,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 		//
 		std::cout<<"Avg Pearson correlation across all key bytes and permutations (only concering most probable key candidates): ";
 		std::cout << overall_avg_cor / permutations;
+		std::cout<<"\n";
+		std::cout<<"Success rate across all permutations: ";
+		std::cout<<"(" << success_rate << " / " << permutations << ") = ";
+		std::cout << (success_rate / permutations) * 100.0 << " %";
 		std::cout<<"\n";
 		std::cout<<"\n";
 	}

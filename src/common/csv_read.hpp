@@ -34,21 +34,17 @@
 namespace csv
 {
 
-// Function to power data lines into individual points.
-// Users must provide the output vector.
+// Function to data point lines into their individual data points.
 void split_string(std::string str, std::vector<float>& out);
 
-// Function to break ciphertext lines into their respective bytes.
-// Users must provide the output vector.
+// Function to break hex lines into their respective bytes.
 void split_string_hex(std::string str, std::vector<unsigned char>& out);
 
 // Function to read in the power data file.
-// Users must provide the output vector of vectors.
 void read_data(std::string path, std::vector< std::vector<float> >& out);
 
-// Function to read in the ciphertext file.
-// Users must provide the output vector of vectors.
-void read_cipher(std::string path, std::vector< std::vector<unsigned char> >& out);
+// Function to read in the hex files (cypher/key)
+void read_hex(std::string path, std::vector< std::vector<unsigned char> >& out);
 
 } //end namespace
 

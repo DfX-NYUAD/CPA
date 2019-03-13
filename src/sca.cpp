@@ -47,10 +47,12 @@ int main(int argc, char *argv[])
 				"-t           Mandatory: cipher texts file\n"
 				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
 				"                with the highest-correlation candidate coming last\n"
-				"-steps       Optional: specify the steps size for subsets of traces to consider, in percent;\n"
+				"-steps       Optional: specify the steps size for subsets of traces to consider, in %;\n"
 				"                if not provided, all traces will be considered as one subset\n"
 				"-perm        Optional: specify the number of permutations to explore per subset of traces;\n"
 				"                if not provided, only one permutation is explored per subset\n"
+				"-k           Optional: correct key file\n"
+				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
 				"-p           Optional: use parallel analysis (requires GPU)\n"
 				"-v           Optional: verbose logging\n"
 				"\n\n";
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
 	
 	std::string data_path;
 	std::string ct_path;
-	std::string aes_path;
+	std::string key_path = "";
 
 	clock_t t = 0;
 
@@ -104,6 +106,11 @@ int main(int argc, char *argv[])
 		{
 			ct_path = argv[i + 1];
 			ct_path_set = 1;
+			i++;
+		}
+		else if (!strcmp(argv[i], "-k"))
+		{
+			key_path = argv[i + 1];
 			i++;
 		}
 		else if (!strcmp(argv[i], "-p"))
@@ -148,7 +155,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path, candidates, permutations, step_size, verbose);
+		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, step_size, verbose);
 	}
 	else
 	{

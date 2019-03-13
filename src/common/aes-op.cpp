@@ -191,7 +191,7 @@ void encrypt_text(std::string aes_path)
 	std::vector< std::vector<unsigned char> > plaintext;
 	std::vector< std::vector<unsigned char> > key_table (11 , std::vector<unsigned char> (16));
 	
-	csv::read_cipher(aes_path, plaintext);
+	csv::read_hex(aes_path, plaintext);
 	key_expand(key, key_table);
 
 	for (int i = 0; i < 16; i++)

@@ -90,7 +90,7 @@ void csv::read_data(std::string path, std::vector< std::vector<float> >& out)
 }
 
 
-void csv::read_cipher(std::string path, std::vector< std::vector<unsigned char> >& out)
+void csv::read_hex(std::string path, std::vector< std::vector<unsigned char> >& out)
 {
 	std::ifstream file;
 	std::string line;
