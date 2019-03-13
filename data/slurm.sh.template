@@ -37,4 +37,4 @@ steps=TODO
 permutations=TODO
 verbose="-nv"
 
-$HOME/CPA/build/sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations $verbose
+./sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations $verbose
