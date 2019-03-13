@@ -189,7 +189,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		int data_pts = num_traces * (s / steps);
 
 		std::cout << "Working on step " << std::dec << s << "...\n";
-		std::cout << "(" << data_pts << " / " << num_traces << ")\n";
+
+		float data_pts_perc = data_pts;
+		data_pts_perc /= num_traces;
+		data_pts_perc *= 100;
+		std::cout << "(" << data_pts << " / " << num_traces << ") traces = " << data_pts_perc << " % of all traces\n";
 		std::cout<<std::endl;
 
 		float overall_avg_cor = 0.0;
