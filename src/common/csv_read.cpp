@@ -43,23 +43,32 @@ void csv::split_string(std::string str, std::vector<float>& out)
 	}
 }
 
-//assumes that string is without any spaces; split every byte
 void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 {
-	char byte[2];
+	char byte[3];
 	std::string tmp;
 	std::istringstream linestream(str);
 	float val;
 
 	while (!linestream.eof()) {
 
-		// reads n-1 = 2 characters
-		linestream.get(byte, 3);
+		// read 4 - 1 = 3 characters
+		//
+		// first 2 characters contain the byte, whereas the 3rd is to be checked for space (that applies to files with bytes
+		// separated by files)
+		linestream.get(byte, 4);
 
-		tmp = std::string("0x" + std::string(byte));
+		// in case the end of line isn't reached yet, and in case the 3rd character is not a space, we have to ``unget'' that
+		// character as it belongs to the next byte already
+		if (!linestream.eof() && byte[2] != ' ')
+			linestream.unget();
+
+		tmp = std::string("0x" + std::string(byte, 0, 2));
+		//std::cout << tmp << std::endl;
 		val = atof(tmp.c_str());
 		out.push_back(val);
 	}
+	//std::cout << std::endl;
 }
 
 void csv::read_data(std::string path, std::vector< std::vector<float> >& out)
