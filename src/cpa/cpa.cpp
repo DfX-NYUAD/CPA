@@ -37,7 +37,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int permutations, int step_size)
+void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int permutations, int step_size, int verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -70,8 +70,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 	std::vector<float> max_correlation (16);
 
 	// Print information to terminal
-	std::cout<<"\n\nMethod of Analysis: CPA";
-	std::cout<<"\nUsing GPU: NO";
+	//std::cout<<"\n\nMethod of Analysis: CPA";
+	//std::cout<<"\nUsing GPU: NO";
 	std::cout<<"\nReading data from: "<<data_path;
 	std::cout<<"\nReading ciphertext from: "<<ct_path<<"\n\n";
 
@@ -168,6 +168,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 		std::cout << "Working on " << std::dec << steps << " percent of all traces...\n";
 		std::cout << "(" << data_pts << " / " << num_traces << ")\n\n";
 
+		float overall_avg_cor = 0.0;
+
 		// Consider multiple runs, as requested by permutations parameter
 		for (int perm = 1; perm <= permutations; perm++) {
 
@@ -176,13 +178,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 				r_pts.at(i).clear();
 			}
 
-			std::cout<<"Generate permutation #" << std::dec << perm << "...\n\n";
+			if (verbose)
+				std::cout<<"Generate permutation #" << std::dec << perm << "...\n\n";
 
 			shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
 
 			// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
-			std::cout<<"Calculate Pearson correlation...\n\n";
+			if (verbose)
+				std::cout<<"Calculate Pearson correlation...\n\n";
 
 			#pragma omp parallel for
 			for (int i = 0; i < num_bytes; i++)
@@ -205,12 +209,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 				}
 			}
 
-			std::cout<<"Derive the key candidates...\n\n";
+			if (verbose)
+				std::cout<<"Derive the key candidates...\n\n";
 
 			// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by
 			// the correlation values -- note that this is different from deriving all possible keys (there, one would combine
 			// all 256 options for key byte 0, with all 256 options for key byte 1, etc).
-			//
+
 			// depending on the runtime parameter, consider all keys by starting from 0, or provide only the most probable one,
 			// which is the last
 			if (candidates) {
@@ -219,7 +224,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 			else {
 				candidate = num_keys - 1;
 			}
+
+			float avg_cor;
 			for (; candidate < num_keys; candidate++) {
+
+				// track max and average correlation
+				avg_cor = 0.0;
 				for (int i = 0; i < num_bytes; i++) {
 
 					auto iter = r_pts.at(i).begin();
@@ -227,39 +237,58 @@ void cpa::cpa(std::string data_path, std::string ct_path, int candidates, int pe
 
 					round_key.at(i) = iter->second;
 					max_correlation.at(i) = iter->first;
+
+					avg_cor += max_correlation.at(i);
 				}
+				avg_cor /= num_bytes;
 
 				// Reverse the AES key scheduling to retrieve the original key
 				aes::inv_key_expand(round_key, full_key);
 
-				// Report the key
-				std::cout<<"Key candidate " << std::dec << candidate << " is (in hex): ";
-				for (unsigned int i = 0; i < full_key.size(); i++)
-					std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
-				std::cout<<"\n";
+				if (verbose) {
 
-				std::cout<<"Related round key is (in hex): ";
-				for (unsigned int i = 0; i < round_key.size(); i++)
-					std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
-				std::cout<<"\n";
+					// Report the key
+					if (candidates) {
+						std::cout<<"Key candidate " << std::dec << candidate << " (in hex): ";
+					}
+					else {
+						std::cout<<"Key (in hex): ";
+					}
+					for (unsigned int i = 0; i < full_key.size(); i++)
+						std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
+					std::cout<<"\n";
 
-				// Report the related correlation values
-				std::cout<<"Related Pearson correlation values are: ";
+					std::cout<<"Round key (in hex): ";
+					for (unsigned int i = 0; i < round_key.size(); i++)
+						std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
+					std::cout<<"\n";
 
-				float avg_cor = 0.0;
-				for (unsigned int i = 0; i < full_key.size(); i++) {
-					std::cout << std::dec << max_correlation.at(i) << " ";
-					avg_cor += max_correlation.at(i);
+					// Report the related correlation values
+					std::cout<<"Related Pearson correlation values are: ";
+
+					for (unsigned int i = 0; i < full_key.size(); i++) {
+						std::cout << std::dec << max_correlation.at(i) << " ";
+					}
+					std::cout<<"\n";
+
+					std::cout<<"Avg Pearson correlation across all bytes: " << avg_cor;
+					std::cout<<"\n";
+
+					std::cout<<"\n";
 				}
-				std::cout<<"\n";
+			} // candidate
 
-				avg_cor /= full_key.size();
-				std::cout<<"Avg Pearson correlation across all bytes: " << avg_cor;
-				std::cout<<"\n";
+			// also track correlation across all permutations, but only for last candidate
+			overall_avg_cor += avg_cor;
 
-				std::cout<<"\n";
-			}
-		}
+		} // perm
+
+		// overall stats, for current step size/set of traces considered
+		//
+		std::cout<<"Avg Pearson correlation across all key bytes and permutations (only concering most probable key candidates): ";
+		std::cout << overall_avg_cor / permutations;
+		std::cout<<"\n";
+		std::cout<<"\n";
 	}
 }
 		

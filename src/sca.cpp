@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
 				"-step        Specify the step size for reducing traces to consider, in percent; if not provided, all traces will be considered\n"
 				"-candidates  Print all key candidates, ordered by their correlation values\n"
 				"-p           Use parallel analysis (requires GPU)\n"
+				"-v           Verbose logging\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
@@ -67,6 +68,7 @@ int main(int argc, char *argv[])
 	int data_path_set = 0;
 	int ct_path_set = 0;
 	int candidates = 0;
+	int verbose = 0;
 
 	int permutations = 1;
 	int step_size = 100;
@@ -112,6 +114,10 @@ int main(int argc, char *argv[])
 		{
 			candidates = 1;
 		}
+		else if (!strcmp(argv[i], "-v"))
+		{
+			verbose = 1;
+		}
 		else if (!strcmp(argv[i], "-perm"))
 		{
 			permutations = std::stoi(argv[i + 1]);
@@ -142,7 +148,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path, candidates, permutations, step_size);
+		cpa::cpa(data_path, ct_path, candidates, permutations, step_size, verbose);
 	}
 	else
 	{
