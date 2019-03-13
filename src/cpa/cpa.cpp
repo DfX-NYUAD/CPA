@@ -337,7 +337,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << (success_rate / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 
-			std::cout<<" Hamming distance: ";
+			std::cout<<" Avg Hamming distance: ";
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 		}
