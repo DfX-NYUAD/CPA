@@ -1,4 +1,10 @@
+NOTES Johann
 
+For building, just use ./build.sh
+
+Overall, the code base remains, but there are several extensions implemented. For a start, invoke ./sca --help
+
+Note that the GPU-centric code base is not updated, only the regular one, but this already comprises OpenMP
 
 ------------------------------------------------------------------------------
                		Side Channel Analysis Tool 
