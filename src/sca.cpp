@@ -53,20 +53,20 @@ int main(int argc, char *argv[])
 				"                if not provided, only one permutation is explored per subset\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
-				"-p           Optional: use parallel analysis (requires GPU)\n"
+				//"-p           Optional: use parallel analysis (requires GPU)\n"
 				"-nv          Optional: non-verbose logging\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
 	
-	#if !defined(OPENCL) && !defined(CUDA)
-	const char* no_gpu_found = "\nNo drivers have been found for an AMD or NVIDIA GPU.\n"
-				   "Please install either OpenCL or CUDA to use this option.\n\n";
-	#endif	
-	// ------------------------------------------------------------------------------------
+	//#if !defined(OPENCL) && !defined(CUDA)
+	//const char* no_gpu_found = "\nNo drivers have been found for an AMD or NVIDIA GPU.\n"
+	//			   "Please install either OpenCL or CUDA to use this option.\n\n";
+	//#endif	
+	//// ------------------------------------------------------------------------------------
 	
 
-	int parallel_analysis = 0;
+	//int parallel_analysis = 0;
 	int data_path_set = 0;
 	int ct_path_set = 0;
 	int candidates = 0;
@@ -113,10 +113,10 @@ int main(int argc, char *argv[])
 			key_path = argv[i + 1];
 			i++;
 		}
-		else if (!strcmp(argv[i], "-p"))
-		{
-			parallel_analysis = 1;
-		}
+		//else if (!strcmp(argv[i], "-p"))
+		//{
+		//	parallel_analysis = 1;
+		//}
 		else if (!strcmp(argv[i], "-candidates"))
 		{
 			candidates = 1;
@@ -152,20 +152,20 @@ int main(int argc, char *argv[])
 	// Start timer for benchmarking purposes
 	t = clock();
 
-	// Decide whether to use the CPU or GPU algorithm
-	if (!parallel_analysis)
-	{
+	//// Decide whether to use the CPU or GPU algorithm
+	//if (!parallel_analysis)
+	//{
 		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, steps, verbose);
-	}
-	else
-	{
-		#if defined(OPENCL) || defined(CUDA)
-		cpa::pcpa(data_path, ct_path);
-		#else
-		std::cerr<<no_gpu_found;
-		return 1;
-		#endif
-	}	
+	//}
+	//else
+	//{
+	//	#if defined(OPENCL) || defined(CUDA)
+	//	cpa::pcpa(data_path, ct_path);
+	//	#else
+	//	std::cerr<<no_gpu_found;
+	//	return 1;
+	//	#endif
+	//}	
 
 	// Stop clock and report times
 	t = clock() - t;
