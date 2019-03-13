@@ -78,7 +78,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::cout<<"Reading data from: "<<data_path;
 	std::cout<<"\n";
 	std::cout<<"Reading ciphertext from: "<<ct_path;
-	std::cout<<"\n";
+	std::cout<<std::endl;
 
 	// Read in ciphertext and power data
 	csv::read_data(data_path, data);
@@ -93,7 +93,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 		for (unsigned int i = 0; i < full_key.size(); i++)
 			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_key[0].at(i)) << " ";
-		std::cout<<"\n";
+		std::cout<<std::endl;
 	}
 
 	// Record the number of traces and the
@@ -103,7 +103,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 	// Prepare main vectors
 	std::cout<<"\n";
-	std::cout<<"Allocating memory...\n\n";
+	std::cout<<"Allocating memory...\n";
+	std::cout<<std::endl;
 	//std::vector< std::multimap<float, unsigned char, std::greater<float>> > r_pts
 	//	( num_bytes, std::multimap<float, unsigned char, std::greater<float>> () );
 	std::vector< std::multimap<float, unsigned char> > r_pts
@@ -122,7 +123,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Obtain a time-based seed
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	std::cout<<"Determine peak power values...\n\n";
+	std::cout<<"Determine peak power values...\n";
+	std::cout<<std::endl;
 
 	// Consider the maximum power point as the leakage point
 	//
@@ -141,7 +143,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		power_pts.at(i) = max_pt;
 	}
 
-	std::cout<<"Calculate Hamming distances...\n\n";
+	std::cout<<"Calculate Hamming distances...\n";
+	std::cout<<std::endl;
 			
 	// Calculate Hamming distances
 	for (unsigned int i = 0; i < num_traces; i++)
@@ -186,7 +189,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		int data_pts = num_traces * (s / steps);
 
 		std::cout << "Working on step " << std::dec << s << "...\n";
-		std::cout << "(" << data_pts << " / " << num_traces << ")\n\n";
+		std::cout << "(" << data_pts << " / " << num_traces << ")\n";
+		std::cout<<std::endl;
 
 		float overall_avg_cor = 0.0;
 		float success_rate = 0.0;
@@ -200,15 +204,19 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				r_pts.at(i).clear();
 			}
 
-			if (verbose)
-				std::cout<<"Generate permutation #" << std::dec << perm << "...\n\n";
+			if (verbose) {
+				std::cout<<"Generate permutation #" << std::dec << perm << "...\n";
+				std::cout<<std::endl;
+			}
 
 			shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
 
 			// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
-			if (verbose)
-				std::cout<<"Calculate Pearson correlation...\n\n";
+			if (verbose) {
+				std::cout<<"Calculate Pearson correlation...\n";
+				std::cout<<std::endl;
+			}
 
 			#pragma omp parallel for
 			for (int i = 0; i < num_bytes; i++)
@@ -231,8 +239,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				}
 			}
 
-			if (verbose)
-				std::cout<<"Derive the key candidates...\n\n";
+			if (verbose) {
+				std::cout<<"Derive the key candidates...\n";
+				std::cout<<std::endl;
+			}
 
 			// The keys will be derived by considering all 256 options for each key byte, whereas the key bytes are ordered by
 			// the correlation values -- note that this is different from deriving all possible keys (there, one would combine
@@ -296,7 +306,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					std::cout<<"Avg Pearson correlation across all key bytes: " << avg_cor;
 					std::cout<<"\n";
 
-					std::cout<<"\n";
+					std::cout<<std::endl;
 				}
 			} // candidate
 
@@ -341,7 +351,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 		}
-		std::cout<<"\n";
+		std::cout<<std::endl;
 	}
 }
 		
