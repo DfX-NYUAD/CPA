@@ -15,13 +15,13 @@ do
 
 	cp slurm.sh.template $script
 
-	sed_string="s,power_traces=TODO,power_traces=power_traces_aes_"$run".txt,g"
+	sed_string="s,power_traces=TODO,power_traces=power_traces_"$run".txt,g"
 	sed -i "$sed_string" $script
 
-	sed_string="s,cipher_text=TODO,cipher_text=cipher_text_aes_"$run".txt,g"
+	sed_string="s,cipher_text=TODO,cipher_text=cipher_text_"$run".txt,g"
 	sed -i "$sed_string" $script
 
-	sed_string="s,correct_key=TODO,correct_key=correct_key_aes_"$run".txt,g"
+	sed_string="s,correct_key=TODO,correct_key=correct_key_"$run".txt,g"
 	sed -i "$sed_string" $script
 
 	sed_string="s,steps=TODO,steps="$1",g"
