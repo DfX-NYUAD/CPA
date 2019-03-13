@@ -38,7 +38,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, bool candidates, int permutations, int steps, bool steps_stop, bool verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, bool candidates, int permutations, int steps, int steps_start, bool steps_stop, bool verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -184,7 +184,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Consider multiple runs, as requested by step_size parameter
 	//
 	// s has to be float, to properly calculate data_pts
-	for (float s = 1; s <= steps; s++) {
+	for (float s = steps_start; s <= steps; s++) {
 
 		int data_pts = num_traces * (s / steps);
 
