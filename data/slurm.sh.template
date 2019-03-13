@@ -1,0 +1,40 @@
+#!/bin/bash 
+
+## SLURM parameters
+##
+## Set partition; parallel requires at least 2 nodes (hence MPI/OpenMP)
+#SBATCH -p serial
+## Set number of nodes to run
+#SBATCH --nodes=1
+## Set number of tasks to run
+#SBATCH --ntasks=1
+## Set number of cores per task (default is 1)
+#SBATCH --cpus-per-task=16
+## Walltime format hh:mm:ss
+#SBATCH --time=48:00:00
+## You may want to be exclusive on the compute node. 
+## Remove the extra # below if needed
+##SBATCH --exclusive
+## Output and error files
+#SBATCH -o TODO
+#SBATCH -e TODO
+
+## For OMP, set number of directly from SLURM,
+##   utilizing all the CPUs allocated.
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+
+# Initially purge modules (safety measure)
+module purge
+
+# Now, load modules as needed
+module load gcc
+
+# Parameters for sca
+power_traces=TODO
+cipher_text=TODO
+correct_key=TODO
+steps=TODO
+permutations=TODO
+verbose="-nv"
+
+$HOME/CPA/build/sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations $verbose
