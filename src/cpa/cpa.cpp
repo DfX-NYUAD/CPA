@@ -187,6 +187,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 		float overall_avg_cor = 0.0;
 		float success_rate = 0.0;
+		float HD = 0;
 
 		// Consider multiple runs, as requested by permutations parameter
 		for (int perm = 1; perm <= permutations; perm++) {
@@ -289,7 +290,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					}
 					std::cout<<"\n";
 
-					std::cout<<"Avg Pearson correlation across all bytes: " << avg_cor;
+					std::cout<<"Avg Pearson correlation across all key bytes: " << avg_cor;
 					std::cout<<"\n";
 
 					std::cout<<"\n";
@@ -299,29 +300,44 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// track correlation across all permutations, but only for last candidate
 			overall_avg_cor += avg_cor;
 
-			// also track success rate for that last candidate
-			bool success = true;
-			for (unsigned int i = 0; i < full_key.size(); i++) {
+			// also track success rate and HD for that last candidate, if correct key was provided
+			if (!correct_key.empty()) {
+				bool success = true;
+				for (unsigned int i = 0; i < full_key.size(); i++) {
 
-				if  (full_key.at(i) != correct_key[0].at(i)) {
-					success = false;
-					break;
+					if  (full_key.at(i) != correct_key[0].at(i)) {
+						success = false;
+					}
+
+					HD += pm::Hamming_dist(full_key.at(i), correct_key[0].at(i), 8);
+					//std::cout << pm::Hamming_dist(full_key.at(i), correct_key[0].at(i), 8) << "\n";
 				}
+				//std::cout << HD << "\n";
+				if (success)
+					success_rate += 1;
 			}
-			if (success)
-				success_rate += 1;
 
 		} // perm
 
 		// overall stats, for current step size/set of traces considered
 		//
-		std::cout<<"Avg Pearson correlation across all key bytes and permutations (only concering most probable key candidates): ";
+		std::cout<<"The following stats are concerning the most probable key candidate across all permutations for this subset of trace";
+		std::cout<<"\n";
+
+		std::cout<<" Avg Pearson correlation (across all key bytes): ";
 		std::cout << overall_avg_cor / permutations;
 		std::cout<<"\n";
-		std::cout<<"Success rate across all permutations: ";
-		std::cout<<"(" << success_rate << " / " << permutations << ") = ";
-		std::cout << (success_rate / permutations) * 100.0 << " %";
-		std::cout<<"\n";
+
+		if (!correct_key.empty()) {
+			std::cout<<" Success rate: ";
+			std::cout<<"(" << success_rate << " / " << permutations << ") = ";
+			std::cout << (success_rate / permutations) * 100.0 << " %";
+			std::cout<<"\n";
+
+			std::cout<<" Hamming distance: ";
+			std::cout << (HD / 128 / permutations) * 100.0 << " %";
+			std::cout<<"\n";
+		}
 		std::cout<<"\n";
 	}
 }
