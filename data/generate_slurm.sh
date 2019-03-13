@@ -10,8 +10,6 @@ fi
 for run in `cat dalma_runs`
 do
 	run_=$run"__"$1"_steps_"$2"_perm"
-	log="log_"$run_
-
 	script=$run_".slurm"
 
 	echo "Generate $script ..."
@@ -33,9 +31,9 @@ do
 	sed_string="s,permutations=TODO,permutations="$2",g"
 	sed -i "$sed_string" $script
 
-	sed_string="s,SBATCH -o TODO,SBATCH -o "$log".log,g"
+	sed_string="s,SBATCH -o TODO,SBATCH -o "$run_".log,g"
 	sed -i "$sed_string" $script
 
-	sed_string="s,SBATCH -e TODO,SBATCH -e "$log".error,g"
+	sed_string="s,SBATCH -e TODO,SBATCH -e "$run_".err,g"
 	sed -i "$sed_string" $script
 done
