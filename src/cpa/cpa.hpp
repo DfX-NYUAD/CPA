@@ -33,7 +33,7 @@ namespace cpa
 {
 
 // The serial CPU based CPA function
-void cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int step_size, int verbose);
+void cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int steps, int verbose);
 
 // The parallel GPU based CPA function
 void pcpa(std::string data_path, std::string ct_path);

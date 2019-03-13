@@ -38,7 +38,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int step_size, int verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, int candidates, int permutations, int steps, int verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -179,11 +179,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	}
 
 	// Consider multiple runs, as requested by step_size parameter
-	for (int steps = 100; steps > 0; steps -= step_size) {
+	//
+	// s has to be float, to properly calculate data_pts
+	for (float s = 1; s <= steps; s++) {
 
-		int data_pts = num_traces * (steps / 100.0);
+		int data_pts = num_traces * (s / steps);
 
-		std::cout << "Working on " << std::dec << steps << " % of all traces...\n";
+		std::cout << "Working on step " << std::dec << s << "...\n";
 		std::cout << "(" << data_pts << " / " << num_traces << ")\n\n";
 
 		float overall_avg_cor = 0.0;

@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 				"-t           Mandatory: cipher texts file\n"
 				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
 				"                with the highest-correlation candidate coming last\n"
-				"-steps       Optional: specify the steps size for subsets of traces to consider, in %;\n"
-				"                if not provided, all traces will be considered as one subset\n"
+				"-steps       Optional: specify the steps size, i.e., the count of subsets of traces to consider;\n"
+				"                if not provided, all the traces will be considered, but no subsets\n"
 				"-perm        Optional: specify the number of permutations to explore per subset of traces;\n"
 				"                if not provided, only one permutation is explored per subset\n"
 				"-k           Optional: correct key file\n"
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	int verbose = 1;
 
 	int permutations = 1;
-	int step_size = 100;
+	int steps = 1;
 	
 	std::string data_path;
 	std::string ct_path;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 		}
 		else if (!strcmp(argv[i], "-steps"))
 		{
-			step_size = std::stoi(argv[i + 1]);
+			steps = std::stoi(argv[i + 1]);
 			i++;
 		}
 		else 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 	// Decide whether to use the CPU or GPU algorithm
 	if (!parallel_analysis)
 	{
-		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, step_size, verbose);
+		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, steps, verbose);
 	}
 	else
 	{
