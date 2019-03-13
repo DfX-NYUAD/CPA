@@ -29,6 +29,7 @@
 #include <chrono>
 #include <random>
 #include <algorithm>
+#include <iomanip>
 
 #include "../common/aes-op.hpp"
 #include "../common/csv_read.hpp"
@@ -91,7 +92,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		csv::read_hex(key_path, correct_key);
 
 		for (unsigned int i = 0; i < full_key.size(); i++)
-			std::cout << std::hex << static_cast<int>(correct_key[0].at(i)) << " ";
+			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_key[0].at(i)) << " ";
 		std::cout<<"\n";
 	}
 
@@ -271,15 +272,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						std::cout<<"Key candidate " << std::dec << candidate << " (in hex): ";
 					}
 					else {
-						std::cout<<"Key (in hex): ";
+						std::cout<<"Full key (in hex):  ";
 					}
 					for (unsigned int i = 0; i < full_key.size(); i++)
-						std::cout << std::hex << static_cast<int>(full_key.at(i)) << " ";
+						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key.at(i)) << " ";
 					std::cout<<"\n";
 
 					std::cout<<"Round key (in hex): ";
 					for (unsigned int i = 0; i < round_key.size(); i++)
-						std::cout << std::hex << static_cast<int>(round_key.at(i)) << " ";
+						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key.at(i)) << " ";
 					std::cout<<"\n";
 
 					// Report the related correlation values
