@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 				"                with the highest-correlation candidate coming last\n"
 				"-steps       Optional: specify the steps size, i.e., the count of subsets of traces to consider;\n"
 				"                if not provided, all the traces will be considered, but no subsets\n"
+				"-steps_stop  Optional: stop exploration of subsets of traces once 100% success rate has been reached\n"
 				"-perm        Optional: specify the number of permutations to explore per subset of traces;\n"
 				"                if not provided, only one permutation is explored per subset\n"
 				"-k           Optional: correct key file\n"
@@ -69,8 +70,10 @@ int main(int argc, char *argv[])
 	//int parallel_analysis = 0;
 	int data_path_set = 0;
 	int ct_path_set = 0;
-	int candidates = 0;
-	int verbose = 1;
+
+	bool candidates = false;
+	bool verbose = true;
+	bool steps_stop = false;
 
 	int permutations = 1;
 	int steps = 1;
@@ -119,11 +122,11 @@ int main(int argc, char *argv[])
 		//}
 		else if (!strcmp(argv[i], "-candidates"))
 		{
-			candidates = 1;
+			candidates = true;
 		}
 		else if (!strcmp(argv[i], "-nv"))
 		{
-			verbose = 0;
+			verbose = false;
 		}
 		else if (!strcmp(argv[i], "-perm"))
 		{
@@ -134,6 +137,10 @@ int main(int argc, char *argv[])
 		{
 			steps = std::stoi(argv[i + 1]);
 			i++;
+		}
+		else if (!strcmp(argv[i], "-steps_stop"))
+		{
+			steps_stop = true;
 		}
 		else 
 		{
@@ -155,7 +162,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, steps, verbose);
+		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, steps, steps_stop, verbose);
 	//}
 	//else
 	//{
