@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sca)
 
-set(CFLAGS "-std=c++11 -Wall -O3 -fopenmp")
+set(CFLAGS "-std=c++11 -Wall -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS}")
 
 add_subdirectory(common)
