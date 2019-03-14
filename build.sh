@@ -31,6 +31,5 @@ mkdir -p build && cd $_
 if [ $rebuild == "y" ]; then
 	rm -r *
 fi
-cmake ../src/
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O3" ../src/
 make
