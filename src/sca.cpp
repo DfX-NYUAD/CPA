@@ -27,7 +27,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <ctime>
+#include <chrono>
 
 #include "common/aes-op.hpp"
 #include "cpa/cpa.hpp"
@@ -84,8 +84,6 @@ int main(int argc, char *argv[])
 	std::string data_path;
 	std::string ct_path;
 	std::string key_path = "";
-
-	clock_t t = 0;
 
 	// Check number of arguments
 	if (argc == 1)
@@ -164,8 +162,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// Start timer for benchmarking purposes
-	t = clock();
+	// track start time
+	auto start_time = std::chrono::system_clock::now();
 
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
@@ -182,9 +180,9 @@ int main(int argc, char *argv[])
 	//	#endif
 	//}	
 
-	// Stop clock and report times
-	t = clock() - t;
-	std::cout<<"The program executed in "<<((float)t)/CLOCKS_PER_SEC<<" CPU seconds\n\n";
+	std::chrono::duration<double> runtime = std::chrono::system_clock::now() - start_time;
+	std::cout << "Overall runtime: " << runtime.count() << " seconds" << std::endl;
+	std::cout << std::endl;
 
 	
 	return 0;
