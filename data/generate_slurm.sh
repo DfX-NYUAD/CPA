@@ -4,12 +4,13 @@ if [ $# -lt 2 ]; then
        echo "Parameters required:"
        echo "1) Number of steps for exploring subsets of traces?"
        echo "2) Number of permutations to consider for each subset of traces?"
+       echo "1) Start step?"
        exit
 fi
 
 for run in `cat dalma_runs`
 do
-	run_=$run"__"$1"_steps_"$2"_perm"
+	run_=$run"__"$1"_steps_"$2"_perm_"$3"_steps_start"
 	script=$run_".slurm"
 
 	echo "Generate $script ..."
@@ -29,6 +30,9 @@ do
 	sed -i "$sed_string" $script
 
 	sed_string="s,permutations=TODO,permutations="$2",g"
+	sed -i "$sed_string" $script
+
+	sed_string="s,steps_start=TODO,steps_start="$3",g"
 	sed -i "$sed_string" $script
 
 	sed_string="s,SBATCH -o TODO,SBATCH -o "$run_".log,g"

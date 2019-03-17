@@ -35,8 +35,8 @@ cipher_text=TODO
 correct_key=TODO
 steps=TODO
 permutations=TODO
+steps_start=TODO
 verbose="-nv"
 steps_stop="-steps_stop"
-steps_start="-steps_start 1"
 
-./sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations $verbose $steps_stop $steps_start
+./sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations -steps_start $steps_start  $steps_stop $verbose
