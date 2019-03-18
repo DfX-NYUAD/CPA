@@ -15,7 +15,7 @@ perm_file=""
 
 for key in {1..10}
 do
-	for tech in 7 32 55 65 90
+	for tech in 7 32 45 55 65 90
 	do
 		run_generic="aes_5k_key_"$key
 		run_tech="aes_5k_"$tech"nm_key_"$key
