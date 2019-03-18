@@ -14,6 +14,8 @@ echo "Build debug as well? (y/n)"
 read -n 1 debug
 echo ""
 
+module load gcc
+
 # debug build
 if [ $debug == "y" ]; then
 	mkdir -p build_debug && cd $_
