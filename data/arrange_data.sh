@@ -11,6 +11,11 @@ done
 for key in {1..10}
 do
 	diff -q --from-file `ls *nm_5000_"$key".txt`
+
+	if [ $? -eq 1 ]
+	then
+		exit
+	fi
 done
 
 # derive the uniform ciphertext files
