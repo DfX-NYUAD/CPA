@@ -162,7 +162,7 @@ bool csv::read_perm_file(std::string path,
 
 			data_pts = num_traces * (s / steps);
 
-			std::cout << "Parsing " << permutations << " permutatations for step " << s << "..." << std::endl;
+			std::cout << "Parsing " << std::dec << permutations << " permutations for step " << s << "..." << std::endl;
 
 			// for each step, init a 2D vector capable of holding [permutations][data_pts] unsigned data
 			//
