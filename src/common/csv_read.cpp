@@ -167,7 +167,7 @@ bool csv::read_perm_file(std::string path,
 			// for each step, init a 2D vector capable of holding [permutations][data_pts] unsigned data
 			//
 			// note that data_pts is different for different steps
-			out.push_back(
+			out.emplace_back(
 					std::vector< std::vector<unsigned> > (permutations,
 						std::vector<unsigned> (data_pts)
 					)
