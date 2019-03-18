@@ -30,6 +30,7 @@
 #include <random>
 #include <algorithm>
 #include <iomanip>
+#include <fstream>
 
 #include "../common/aes-op.hpp"
 #include "../common/csv_read.hpp"
@@ -38,7 +39,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, bool candidates, int permutations, int steps, int steps_start, bool steps_stop, bool verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool candidates, int permutations, int steps, int steps_start, bool steps_stop, bool verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -62,6 +63,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 	int candidate;
 
+	bool perm_file_write = false;
+	bool perm_file_read = false;
+	std::fstream perm_file;
+
+	// Obtain a time-based seed
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
 	// Prepare vectors
 	std::vector< std::vector<float> > data;
 	std::vector< std::vector<unsigned char> > ciphertext;
@@ -70,6 +78,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector<unsigned char> full_key (num_bytes);
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
 	std::vector<float> max_correlation (num_bytes);
+	std::vector< std::vector< std::vector<unsigned> > > perm_from_file;
 
 	// Print information to terminal
 	//std::cout<<"\n\nMethod of Analysis: CPA";
@@ -84,6 +93,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	csv::read_data(data_path, data);
 	csv::read_hex(ct_path, ciphertext);
 
+	// Record the number of traces and the
+	// number of points per trace
+	num_traces = data.size();
+	num_pts = data.at(0).size();
+
 	// Read in the correct key, if provided 
 	if (key_path != "") {
 
@@ -96,10 +110,29 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout<<std::endl;
 	}
 
-	// Record the number of traces and the
-	// number of points per trace
-	num_traces = data.size();
-	num_pts = data.at(0).size();
+	// Handle the permutations file, if provided
+	if (perm_path != "") {
+
+		std::cout<<"Handle permutations file: " << perm_path << std::endl;
+
+		// try to read in permutations from file
+		perm_file_read = csv::read_perm_file(
+				perm_path,
+				steps,
+				steps_start,
+				permutations,
+				num_traces,
+				perm_from_file
+			);
+
+		// if reading failed, consider to write out to the perm_file
+		if (!perm_file_read) {
+			perm_file_write = true;
+			perm_file.open(perm_path.c_str(), std::fstream::out);
+
+			std::cout << "Reading of permutations file failed; permutations are generated randomly and written out to this file" << std::endl;
+		}
+	}
 
 	// Prepare main vectors
 	std::cout<<"\n";
@@ -114,14 +147,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		( num_bytes, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
 
-	// Prepare the permutation of trace data; define a vector with all trace indices which is later on randomly shuffled
 	std::vector<unsigned> trace_indices (num_traces);
+	// Prepare with all trace indices; required for shuffling/generating permutations in case they are not read in
 	for (unsigned i = 0; i < num_traces; i++) {
 		trace_indices.at(i) = i;
 	}
-
-	// Obtain a time-based seed
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
 	std::cout<<"Determine peak power values...\n";
 	std::cout<<std::endl;
@@ -209,11 +239,36 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 
 			if (verbose) {
-				std::cout<<"Generate permutation #" << std::dec << perm << "...\n";
+				std::cout<<"Consider permutation #" << std::dec << perm << "...\n";
 				std::cout<<std::endl;
 			}
 
-			shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
+			// in case pre-defined permutations have been read in, use those
+			if (perm_file_read) {
+
+				trace_indices = perm_from_file[s - steps_start][perm - 1];
+			}
+			// otherwise, consider a random one
+			else {
+				shuffle(trace_indices.begin(), trace_indices.end(), std::default_random_engine(seed));
+
+				// also write out the newly generated, random permutation
+				if (perm_file_write) {
+
+					// write out markers for simpler parsing
+					if (perm == 1) {
+						perm_file << "STEP_START" << std::endl;
+					}
+					perm_file << "PERM_START" << std::endl;
+
+					// only write out the first #(data_pts) as needed
+					for (int d = 0; d < data_pts; d++) {
+						perm_file << trace_indices[d] << " ";
+					}
+					// one permutation per line, for readability
+					perm_file << std::endl;
+				}
+			}
 
 			// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
@@ -356,13 +411,29 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 
-			// abort steps if requested by parameter, but only once success_rate is 100%
-			if (steps_stop && (success_rate / permutations) == 1) {
-				std::cout<<std::endl;
-				break;
+			// abort steps if requested by parameter
+			if (steps_stop) {
+
+				// but only once success_rate is 100%
+				if ((success_rate / permutations) == 1) {
+
+					// finally, steps cannot be aborted when permutations are written out; all possible permutations
+					// have to be recorded, since they might be required for other data sets where fewer sets would not
+					// suffice to resolve the key
+					//
+					if (!perm_file_write) {
+
+						std::cout<<std::endl;
+						break;
+					}
+				}
 			}
 		}
 		std::cout<<std::endl;
+	}
+
+	if (perm_file_write) {
+		perm_file.close();
 	}
 }
 		

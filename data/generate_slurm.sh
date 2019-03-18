@@ -35,6 +35,9 @@ do
 	sed_string="s,steps_start=TODO,steps_start="$3",g"
 	sed -i "$sed_string" $script
 
+	sed_string="s,perm_file=TODO,perm_file="$run_".perm,g"
+	sed -i "$sed_string" $script
+
 	sed_string="s,SBATCH -o TODO,SBATCH -o "$run_".log,g"
 	sed -i "$sed_string" $script
 

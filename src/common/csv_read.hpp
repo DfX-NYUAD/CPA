@@ -46,6 +46,15 @@ void read_data(std::string path, std::vector< std::vector<float> >& out);
 // Function to read in the hex files (cypher/key)
 void read_hex(std::string path, std::vector< std::vector<unsigned char> >& out);
 
+// Function to read in permutations file
+bool read_perm_file(std::string path,
+		int steps,
+		int steps_start,
+		int permutations,
+		size_t num_traces,
+		std::vector< std::vector< std::vector<unsigned> > >& out
+	);
+
 } //end namespace
 
 #endif

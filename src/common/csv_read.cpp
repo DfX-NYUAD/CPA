@@ -81,7 +81,7 @@ void csv::read_data(std::string path, std::vector< std::vector<float> >& out)
 	if (!file.is_open())
 	{
 		std::cerr<<"\nCould not open: "<<path<<"\n\n";
-		exit(1);	
+		exit(1);
 	}
 
 	
@@ -109,7 +109,7 @@ void csv::read_hex(std::string path, std::vector< std::vector<unsigned char> >& 
 	if (!file.is_open())
 	{
 		std::cerr<<"\nCould not open: "<<path<<"\n\n";
-		exit(1);	
+		exit(1);
 	}
 
 	
@@ -124,4 +124,79 @@ void csv::read_hex(std::string path, std::vector< std::vector<unsigned char> >& 
 	file.close();
 
 	out.pop_back();
+}
+
+bool csv::read_perm_file(std::string path,
+		int steps,
+		int steps_start,
+		int permutations,
+		size_t num_traces,
+		std::vector< std::vector< std::vector<unsigned> > >& out
+	)
+{
+	std::ifstream file;
+	std::string word;
+	int data_pts;
+	// s has to be float, to properly calculate data_pts
+	float s;
+	int perm_index;
+	int data_pt_index;
+	int step_index;
+
+	file.open(path.c_str(), std::ifstream::in);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	s = steps_start;
+	step_index = perm_index = data_pt_index = -1;
+	while (!file.eof()) {
+
+		file >> word;
+
+		// a new step begins, comprising a set of permutations
+		//
+		if (word == "STEP_START") {
+			step_index++;
+			perm_index = -1;
+
+			data_pts = num_traces * (s / steps);
+
+			std::cout << "Parsing " << permutations << " permutatations for step " << s << "..." << std::endl;
+
+			// for each step, init a 2D vector capable of holding [permutations][data_pts] unsigned data
+			//
+			// note that data_pts is different for different steps
+			out.push_back(
+					std::vector< std::vector<unsigned> > (permutations,
+						std::vector<unsigned> (data_pts)
+					)
+				);
+
+			s++;
+		}
+		// a new permutation begins
+		else if (word == "PERM_START") {
+			perm_index++;
+			data_pt_index = -1;
+		}
+		// a regular word, i.e., an indices as part of a permutation
+		else {
+			data_pt_index++;
+
+			out[step_index][perm_index][data_pt_index] = std::stoi(word);
+
+			// sanity check for index being in proper range
+			if ((out[step_index][perm_index][data_pt_index] < 0) || (out[step_index][perm_index][data_pt_index] >= num_traces)) {
+				std::cerr<<"\nError: the permutations file " << path << " contains an out-of-range index\n";
+				std::cerr<<"The violating index is: " << out[step_index][perm_index][data_pt_index];
+				std::cerr<<"; the upper limit for the index is: " << num_traces - 1 << std::endl;
+				exit(1);
+			}
+		}
+	}
+
+	file.close();
+
+	return true;
 }

@@ -51,9 +51,13 @@ int main(int argc, char *argv[])
 				"                if not provided, all the traces will be considered, but no subsets\n"
 				"-steps_start Optional: specify the start step;\n"
 				"                if not provided, start with step 1\n"
-				"-steps_stop  Optional: stop exploration of subsets of traces once 100% success rate has been reached\n"
-				"-perm        Optional: specify the number of permutations to explore per subset of traces;\n"
-				"                if not provided, only one permutation is explored per subset\n"
+				"-steps_stop  Optional: stop exploration of subsets of traces once 100% success rate has been reached;\n"
+				"                note that, if perm_file is written out, this parameter is deactivated!\n"
+				"-perm        Optional: specify the number of permutations to consider per subset of traces;\n"
+				"                if not provided, only one permutation is considered per subset of traces\n"
+				"-perm_file   Optional: the file with permutations indices to consider per subset of traces;\n"
+				"                if not provided, random permutations are generated;\n"
+				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
@@ -84,6 +88,7 @@ int main(int argc, char *argv[])
 	std::string data_path;
 	std::string ct_path;
 	std::string key_path = "";
+	std::string perm_path = "";
 
 	// Check number of arguments
 	if (argc == 1)
@@ -115,6 +120,11 @@ int main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-k"))
 		{
 			key_path = argv[i + 1];
+			i++;
+		}
+		else if (!strcmp(argv[i], "-perm_file"))
+		{
+			perm_path = argv[i + 1];
 			i++;
 		}
 		//else if (!strcmp(argv[i], "-p"))
@@ -168,7 +178,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, candidates, permutations, steps, steps_start, steps_stop, verbose);
+		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, verbose);
 	//}
 	//else
 	//{
