@@ -257,16 +257,16 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 					// write out markers for simpler parsing
 					if (perm == 1) {
-						perm_file << "STEP_START" << std::endl;
+						perm_file << "STEP_START\n";
 					}
-					perm_file << "PERM_START" << std::endl;
+					perm_file << "PERM_START\n";
 
 					// only write out the first #(data_pts) as needed
 					for (int d = 0; d < data_pts; d++) {
 						perm_file << trace_indices[d] << " ";
 					}
-					// one permutation per line, for readability
-					perm_file << std::endl;
+					// one permutation per line (only for readability, not required for parsing)
+					perm_file << "\n";
 				}
 			}
 
