@@ -11,7 +11,7 @@
 ## Set number of cores per task (default is 1)
 #SBATCH --cpus-per-task=16
 ## Walltime format hh:mm:ss
-#SBATCH --time=48:00:00
+#SBATCH --time=06:00:00
 ## You may want to be exclusive on the compute node. 
 ## Remove the extra # below if needed
 ##SBATCH --exclusive

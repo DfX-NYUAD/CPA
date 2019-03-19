@@ -1,26 +1,28 @@
 #!/bin/bash
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 4 ]; then
        echo "Parameters required:"
        echo "1) Number of steps for exploring subsets of traces?"
        echo "2) Number of permutations to consider for each subset of traces?"
-       echo "1) Start step?"
+       echo "3) Start step?"
+       echo "4) Run ID?"
        exit
 fi
 
 rm sbatch.sh
 
-#perm_file="-perm_file aes_5k__100_steps_10000_perm_1_steps_start.perm"
 perm_file=""
+#perm_file="-perm_file aes_5k__100_steps_10000_perm_1_steps_start.perm"
 
 for key in {1..10}
 do
 	for tech in 7 32 45 55 65 90
+#	for tech in 32 
 	do
 		run_generic="aes_5k_key_"$key
 		run_tech="aes_5k_"$tech"nm_key_"$key
 
-		run_=$run_tech"__"$1"_steps_"$2"_perm_"$3"_steps_start"
+		run_=$run_tech"__"$1"_steps_"$2"_perm_"$3"_steps_start__run_"$4
 		script=$run_".slurm"
 
 		echo "Generate $script ..."
@@ -45,7 +47,7 @@ do
 		sed_string="s,steps_start=TODO,steps_start="$3",g"
 		sed -i "$sed_string" $script
 
-#sed_string="s,perm_file=TODO,perm_file="$run_".perm,g"
+		#sed_string="s,perm_file=TODO,perm_file="$run_".perm,g"
 		sed_string="s,perm_file=TODO,perm_file=\""$perm_file\"",g"
 		sed -i "$sed_string" $script
 
