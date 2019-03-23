@@ -1,31 +1,25 @@
 #!/bin/bash
 
-if [ $# -lt 5 ]; then
+if [ $# -lt 4 ]; then
        echo "Parameters required:"
        echo "1) Number of steps for exploring subsets of traces?"
        echo "2) Number of permutations to consider for each subset of traces?"
        echo "3) Start step?"
        echo "4) Run ID?"
-       echo "5) List of technologies, as one parameter; e.g., \"7 32 45 SDF\""
        exit
 fi
 
 rm sbatch.sh
 
 perm_file=""
-#perm_file="-perm_file aes_5k__100_steps_10000_perm_1_steps_start.perm"
+#perm_file="-perm_file ../aes_5k__100_steps_10000_perm_1_steps_start.perm"
 
 for key in {1..10}
 do
-	for tech in $5
+	for tech in NCFET baseline
 	do
 		run_generic="aes_5k_key_"$key
-		if [ "$tech" == "SDF" ]; then
-			tech=65
-			run_tech="aes_5k_"$tech"nm_SDF_key_"$key
-		else
-			run_tech="aes_5k_"$tech"nm_key_"$key
-		fi
+		run_tech="aes_5k_"$tech"_key_"$key
 
 		run_=$run_tech"__"$1"_steps_"$2"_perm_"$3"_steps_start__run_"$4
 		script=$run_".slurm"
