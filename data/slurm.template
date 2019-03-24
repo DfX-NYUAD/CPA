@@ -11,7 +11,7 @@
 ## Set number of cores per task (default is 1)
 #SBATCH --cpus-per-task=16
 ## Walltime format hh:mm:ss
-#SBATCH --time=06:00:00
+#SBATCH --time=24:00:00
 ## You may want to be exclusive on the compute node. 
 ## Remove the extra # below if needed
 ##SBATCH --exclusive
@@ -36,9 +36,7 @@ correct_key=TODO
 steps=TODO
 permutations=TODO
 steps_start=TODO
-steps_stop=TODO
-rate_stop=TODO
-perm_file=TODO
+commands=TODO
 verbose="-nv"
 
-./sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations -steps_start $steps_start  $steps_stop $rate_stop $perm_file $verbose
+./sca -d $power_traces -t $cipher_text -k $correct_key -steps $steps -perm $permutations -steps_start $steps_start  $commands $verbose

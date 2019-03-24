@@ -10,9 +10,7 @@ if [ $# -lt 8 ]; then
        echo "6) Number of keys?"
        echo "7) Name of cipher, e.g,. aes"
        echo "8) Number of traces"
-       echo "9) Optional; stop step, e.g., 50"
-       echo "10) Optional; perm file, e.g., aes_5000__100_steps_10000_perm_1_steps_start.perm"
-       echo "11) Optional; rate stop, e.g., 99.99"
+       echo "9) Optional; fully specified commands, as one parameter; \"-steps_stop 100 -rate_stop 99.9\""
        exit
 fi
 
@@ -27,20 +25,7 @@ cipher=$7
 traces=$8
 
 # optional parameters
-steps_stop=$9
-perm_file=$10
-rate_stop=$11
-
-# prepare optional parameters, if provided
-if [ "$steps_stop" != "" ]; then
-	steps_stop="-steps_stop $steps_stop"
-fi
-if [ "$perm_file" != "" ]; then
-	perm_file="-perm_file $perm_file"
-fi
-if [ "$rate_stop" != "" ]; then
-	rate_stop="-rate_stop $rate_stop"
-fi
+commands=$9
 
 rm sbatch.sh
 
@@ -69,19 +54,13 @@ do
 		sed_string="s,steps=TODO,steps="$steps",g"
 		sed -i "$sed_string" $script
 
-		sed_string="s,permutations=TODO,permutations="$permutations",g"
-		sed -i "$sed_string" $script
-
 		sed_string="s,steps_start=TODO,steps_start="$steps_start",g"
 		sed -i "$sed_string" $script
 
-		sed_string="s,steps_stop=TODO,steps_stop=\""$steps_stop\"",g"
+		sed_string="s,permutations=TODO,permutations="$permutations",g"
 		sed -i "$sed_string" $script
 
-		sed_string="s,rate_stop=TODO,rate_stop=\""$rate_stop\"",g"
-		sed -i "$sed_string" $script
-
-		sed_string="s,perm_file=TODO,perm_file=\""$perm_file\"",g"
+		sed_string="s,commands=TODO,commands=\""$commands\"",g"
 		sed -i "$sed_string" $script
 
 		sed_string="s,SBATCH -o TODO,SBATCH -o "$run_".log,g"

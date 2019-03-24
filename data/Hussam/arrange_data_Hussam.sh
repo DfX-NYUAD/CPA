@@ -10,6 +10,8 @@ fi
 
 tech_list="NCFET baseline"
 keys=$1
+cipher=$2
+traces=$3
 
 # copy the data from dfx
 for tech in $tech_list
@@ -68,5 +70,5 @@ done
 # rm the original files
 for tech in $tech_list
 do
-	rm "$tech"/ -ri
+	rm "$tech"/ -r
 done

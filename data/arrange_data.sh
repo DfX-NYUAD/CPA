@@ -70,13 +70,15 @@ done
 # derive the uniform ciphertext files
 for ((key = 1; key <= keys; key++))
 do
-	cp ${tech_list[0]}"_"$traces"_"$key".txt" "cipher_text_"$cipher"_"$traces"_key_"$key".txt"
+	first=`echo $tech_list | awk '{print $1}'`
+	cp $first"_"$traces"_"$key".txt" "cipher_text_"$cipher"_"$traces"_key_"$key".txt"
 done
 
 # extract the individual keys from one keyfile
 for ((key = 1; key <= keys; key++))
 do
-	echo `head -n $key ${tech_list[0]}"_"$traces"_"$keys"_key.txt" | tail -n 1` > correct_key_"$cipher"_"$traces"_key_"$key".txt
+	first=`echo $tech_list | awk '{print $1}'`
+	echo `head -n $key $first"_"$traces"_"$keys"_key.txt" | tail -n 1` > correct_key_"$cipher"_"$traces"_key_"$key".txt
 done
 
 # cp the power files
