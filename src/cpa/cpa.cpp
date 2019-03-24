@@ -78,7 +78,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector<unsigned char> full_key (num_bytes);
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
 	std::vector<float> max_correlation (num_bytes);
-	std::vector< std::vector< std::vector<unsigned> > > perm_from_file;
+	std::vector< std::vector<unsigned> > perm_from_file;
 
 	// Print information to terminal
 	//std::cout<<"\n\nMethod of Analysis: CPA";
@@ -116,18 +116,23 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout<<"Handle permutations file: " << perm_path << std::endl;
 
 		// try to read in permutations from file
-		perm_file_read = csv::read_perm_file(
-				perm_path,
-				steps,
-				steps_start,
-				permutations,
-				num_traces,
-				perm_from_file
-			);
+		perm_file.open(perm_path.c_str(), std::ifstream::in);
 
+		if (perm_file.is_open()) {
+			perm_file_read = true;
+
+			// dummy reading of "step 0", to initialize file parsing
+			csv::read_perm_file(perm_file, 0, 0, 0, 0, perm_from_file);
+
+			// dummy reading/dropping of all earlier steps which are not required for current call
+			for (int drop = 1; drop < steps_start; drop++) {
+				csv::read_perm_file(perm_file, drop, 0, 0, 0, perm_from_file);
+			}
+		}
 		// if reading failed, consider to write out to the perm_file
-		if (!perm_file_read) {
+		else {
 			perm_file_write = true;
+
 			perm_file.open(perm_path.c_str(), std::fstream::out);
 
 			std::cout << "Reading of permutations file failed; permutations are generated randomly and written out to this file" << std::endl;
@@ -230,6 +235,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		float success_rate = 0.0;
 		float HD = 0;
 
+		// init permutations vector from file
+		if (perm_file_read) {
+
+			csv::read_perm_file(perm_file, s, data_pts, permutations, num_traces, perm_from_file);
+		}
+
 		// Consider multiple runs, as requested by permutations parameter
 		for (int perm = 1; perm <= permutations; perm++) {
 
@@ -246,7 +257,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// in case pre-defined permutations have been read in, use those
 			if (perm_file_read) {
 
-				trace_indices = perm_from_file[s - steps_start][perm - 1];
+				trace_indices = perm_from_file[perm - 1];
 			}
 			// otherwise, consider a random one
 			else {
@@ -286,8 +297,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					//
 					r_pts.at(i).emplace( std::make_pair(
 
-								// Note that power_pts and Hamming_pts.at(i).at(j) contain the data for all
-								// traces; only the #data_pts data points from trace_indices[0] ...
+								// Note that power_pts and Hamming_pts.at(i).at(j) may contain the data for
+								// all traces; only the #data_pts data points from trace_indices[0] ...
 								// trace_indices[data_pts - 1] will be considered
 								stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, data_pts),
 
