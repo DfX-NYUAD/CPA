@@ -29,8 +29,8 @@ done
 # check whether all ciphertext files are the same
 for key in {1..10}
 do
-	diff -q --from-file `ls *nm_5000_"$key".txt`
-#diff -q --from-file `ls *nm_5000_"$key".txt SDF/*nm_5000_"$key".txt`
+	diff -q --from-file `ls *nm_5000_"$key".txt 2>/dev/null`
+	#diff -q --from-file `ls *nm_5000_"$key".txt SDF/*nm_5000_"$key".txt 2>/dev/null`
 
 	# some files differ
 	if [ $? -eq 1 ]
@@ -78,15 +78,15 @@ do
 	done
 done
 
-# zip the original files
-for tech in $1
-do
-	if [ "$tech" == "SDF" ]; then
-		zip orig.zip SDF/ -r
-	else
-		zip orig.zip "$tech"nm_* SDF/ -r
-	fi
-done
+## zip the original files
+#for tech in $1
+#do
+#	if [ "$tech" == "SDF" ]; then
+#		zip orig.zip SDF/ -r
+#	else
+#		zip orig.zip "$tech"nm_* SDF/ -r
+#	fi
+#done
 
 # rm the original files
 for tech in $1

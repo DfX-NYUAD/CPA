@@ -11,7 +11,7 @@ done
 # check whether all ciphertext files are the same
 for key in {1..10}
 do
-	diff -q --from-file `ls */7nm_5000_"$key".txt`
+	diff -q --from-file `ls */7nm_5000_"$key".txt 2>/dev/null`
 
 	# some files differ
 	if [ $? -eq 1 ]
@@ -48,11 +48,11 @@ do
 	done
 done
 
-# zip the original files
-for tech in NCFET baseline
-do
-	zip orig.zip "$tech"/ -r
-done
+## zip the original files
+#for tech in NCFET baseline
+#do
+#	zip orig.zip "$tech"/ -r
+#done
 
 # rm the original files
 for tech in NCFET baseline
