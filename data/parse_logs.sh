@@ -6,7 +6,7 @@ if [ $# -lt 6 ]; then
        echo "2) Number of permutations"
        echo "3) Start step"
        echo "4) Run ID"
-       echo "5) List of technologies, as one parameter; e.g., \"7nm 32nm 45nm SDF NCFET baseline\""
+       echo "5) List of fully specified technologies, as one parameter; e.g., \"7nm 32nm 45nm 65nm_SDF NCFET baseline\""
        echo "6) Number of keys"
        exit
 fi

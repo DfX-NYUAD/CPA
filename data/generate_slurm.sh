@@ -1,16 +1,18 @@
 #!/bin/bash
 
-if [ $# -lt 6 ]; then
+if [ $# -lt 8 ]; then
        echo "Parameters required:"
        echo "1) Number of steps for exploring subsets of traces?"
        echo "2) Number of permutations to consider for each subset of traces?"
        echo "3) Start step?"
        echo "4) Run ID?"
-       echo "5) List of technologies, as one parameter; e.g., \"7nm 32nm 45nm SDF NCFET baseline\""
-       echo "5) Number of keys?"
-       echo "7) Optional; stop step, e.g., 50"
-       echo "8) Optional; perm file, e.g., aes_5k__100_steps_10000_perm_1_steps_start.perm"
-       echo "9) Optional; rate stop, e.g., 99.99"
+       echo "5) List of fully specified technologies, as one parameter; e.g., \"7nm 32nm 45nm 65nm_SDF NCFET baseline\""
+       echo "6) Number of keys?"
+       echo "7) Name of cipher, e.g,. aes"
+       echo "8) Number of traces"
+       echo "9) Optional; stop step, e.g., 50"
+       echo "10) Optional; perm file, e.g., aes_5000__100_steps_10000_perm_1_steps_start.perm"
+       echo "11) Optional; rate stop, e.g., 99.99"
        exit
 fi
 
@@ -21,11 +23,13 @@ steps_start=$3
 run=$4
 tech_list=$5
 keys=$6
+cipher=$7
+traces=$8
 
 # optional parameters
-steps_stop=$7
-perm_file=$8
-rate_stop=$9
+steps_stop=$9
+perm_file=$10
+rate_stop=$11
 
 # prepare optional parameters, if provided
 if [ "$steps_stop" != "" ]; then
@@ -44,14 +48,8 @@ for ((key = 1; key <= keys; key++))
 do
 	for tech in $tech_list
 	do
-		run_generic="aes_5k_key_"$key
-		if [ "$tech" == "SDF" ]; then
-			tech="65nm"
-			run_tech="aes_5k_"$tech"_SDF_key_"$key
-		else
-			run_tech="aes_5k_"$tech"_key_"$key
-		fi
-
+		run_generic=$cipher"_"$traces"_key_"$key
+		run_tech=$cipher"_"$traces"_"$tech"_key_"$key
 		run_=$run_tech"__"$steps"_steps_"$permutations"_perm_"$steps_start"_steps_start__run_"$run
 		script=$run_".slurm"
 
