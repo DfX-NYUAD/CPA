@@ -47,14 +47,16 @@ int main(int argc, char *argv[])
 				"-t           Mandatory: cipher texts file\n"
 				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
 				"                with the highest-correlation candidate coming last\n"
-				"-steps       Optional: specify the steps size, i.e., the count of subsets of traces to consider;\n"
+				"-steps       Optional: specify the steps size, i.e., the total count of subsets of traces to consider;\n"
 				"                if not provided, all the traces will be considered, but no subsets\n"
 				"-steps_start Optional: specify the start step;\n"
 				"                if not provided, start with step 1\n"
-				"-steps_stop  Optional: stop exploration of subsets of traces once 100% success rate has been reached;\n"
-				"                note that, if perm_file is written out, this parameter is deactivated!\n"
+				"-steps_stop  Optional: specify the stop step;\n"
+				"                if not provided, stop according to ``steps''\n"
 				"-perm        Optional: specify the number of permutations to consider per subset of traces;\n"
 				"                if not provided, only one permutation is considered per subset of traces\n"
+				"-rate_stop   Optional: specify the success rate (e.g., 99.99) for when to stop exploration of subsets;\n"
+				"                if not provided, stop according to ``steps_stop''\n"
 				"-perm_file   Optional: the file with permutations indices to consider per subset of traces;\n"
 				"                if not provided, random permutations are generated;\n"
 				"                if not found, random permutations are generated and written out to the file;\n"
@@ -79,11 +81,14 @@ int main(int argc, char *argv[])
 
 	bool candidates = false;
 	bool verbose = true;
-	bool steps_stop = false;
 
+	// 1 are default values
 	int permutations = 1;
 	int steps = 1;
 	int steps_start = 1;
+	// -1 indicates that these parameters have not been set
+	int steps_stop = -1;
+	float rate_stop = -1;
 	
 	std::string data_path;
 	std::string ct_path;
@@ -156,7 +161,13 @@ int main(int argc, char *argv[])
 		}
 		else if (!strcmp(argv[i], "-steps_stop"))
 		{
-			steps_stop = true;
+			steps_stop = std::stoi(argv[i + 1]);
+			i++;
+		}
+		else if (!strcmp(argv[i], "-rate_stop"))
+		{
+			rate_stop = std::stof(argv[i + 1]);
+			i++;
 		}
 		else 
 		{
@@ -172,13 +183,18 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// Set steps_stop if not provided by user
+	if (steps_stop == -1) {
+		steps_stop = steps;
+	}
+
 	// track start time
 	auto start_time = std::chrono::system_clock::now();
 
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, verbose);
+		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose);
 	//}
 	//else
 	//{

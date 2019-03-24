@@ -39,7 +39,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool candidates, int permutations, int steps, int steps_start, bool steps_stop, bool verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, bool verbose)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -214,7 +214,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Consider multiple runs, as requested by step_size parameter
 	//
 	// s has to be float, to properly calculate data_pts
-	for (float s = steps_start; s <= steps; s++) {
+	for (float s = steps_start; s <= steps_stop; s++) {
 
 		int data_pts = num_traces * (s / steps);
 
@@ -404,29 +404,22 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			std::cout<<" Success rate: ";
 			std::cout<<"(" << success_rate << " / " << permutations << ") = ";
-			std::cout << (success_rate / permutations) * 100.0 << " %";
+
+			success_rate /= permutations;
+			success_rate *= 100.0;
+
+			std::cout << success_rate << " %";
 			std::cout<<"\n";
 
 			std::cout<<" Avg Hamming distance: ";
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 
-			// abort steps if requested by parameter
-			if (steps_stop) {
+			// in case a stop rate is provided, abort steps once that success rate is reached
+			if ((rate_stop != -1) && (success_rate >= rate_stop)) {
 
-				// but only once success_rate is 100%
-				if ((success_rate / permutations) == 1) {
-
-					// finally, steps cannot be aborted when permutations are written out; all possible permutations
-					// have to be recorded, since they might be required for other data sets where fewer sets would not
-					// suffice to resolve the key
-					//
-					if (!perm_file_write) {
-
-						std::cout<<std::endl;
-						break;
-					}
-				}
+				std::cout<<std::endl;
+				break;
 			}
 		}
 		std::cout<<std::endl;
