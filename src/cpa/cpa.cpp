@@ -244,7 +244,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		float overall_avg_cor = 0.0;
 		float success_rate = 0.0;
 		float HD = 0;
-		float HD_candidates = 0;
+		std::vector<float> HD_candidates (num_bytes, 0.0);
 
 		// init permutations vector from file
 		if (perm_file_read) {
@@ -429,7 +429,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 						if  (round_key.at(i) == correct_round_key[10].at(i)) {
 
-							HD_candidates += ((num_keys - 1) - candidate);
+							HD_candidates.at(i) += ((num_keys - 1) - candidate);
 
 							//std::cout << "byte: " << i;
 							//std::cout << "; ";
@@ -470,10 +470,21 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << (HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 
-			std::cout<<" Avg correlation-centric Hamming distance: ";
-			// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
-			std::cout << (HD_candidates / (16 * 255) / permutations) * 100.0 << " %";
-			std::cout<<"\n";
+			std::cout<<" Avg correlation-centric Hamming distances:\n";
+
+			float HD_candidates_overall = 0;
+			for (unsigned int i = 0; i < num_bytes; i++) {
+
+				std::cout << "  Byte " << i << ": ";
+
+				// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
+				std::cout << (HD_candidates.at(i) / 255 / permutations) * 100.0 << " %\n";
+
+				// also track overall HD
+				HD_candidates_overall += HD_candidates.at(i);
+			}
+			std::cout << "  Avg across all bytes: ";
+			std::cout << (HD_candidates_overall / (num_bytes * 255) / permutations) * 100.0 << " %\n";
 
 			// in case a stop rate is provided, abort steps once that success rate is reached
 			if ((rate_stop != -1) && (success_rate >= rate_stop)) {
