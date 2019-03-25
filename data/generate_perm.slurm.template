@@ -1,0 +1,32 @@
+#!/bin/bash 
+
+## SLURM parameters
+##
+## Set partition; parallel requires at least 2 nodes (hence MPI/OpenMP)
+#SBATCH -p serial
+## Set number of nodes to run
+#SBATCH --nodes=1
+## Set number of tasks to run
+#SBATCH --ntasks=1
+## Set number of cores per task (default is 1)
+#SBATCH --cpus-per-task=1
+## Walltime format hh:mm:ss
+#SBATCH --time=48:00:00
+## You may want to be exclusive on the compute node. 
+## Remove the extra # below if needed
+##SBATCH --exclusive
+## Output and error files
+#SBATCH -o TODO
+#SBATCH -e TODO
+
+# Initially purge modules (safety measure)
+module purge
+
+# Parameters
+steps=TODO
+traces=TODO
+traces_per_step=TODO
+permutations=TODO
+run=TODO
+
+./generate_perm.sh $steps $traces $traces_per_step $permutations $run
