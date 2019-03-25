@@ -24,6 +24,7 @@ for tech in $tech_list
 do
 	for ((key = 1; key <= keys; key++))
 	do
+		# only for listing files; copied from below
 		file="*"$tech"_key_"$key"__"$steps"_steps_"$permutations"_perm_"$steps_start"_steps_start__run_"$run".log"
 
 		ls -l $file
@@ -35,6 +36,11 @@ do
 	for ((key = 1; key <= keys; key++))
 	do
 		file="*"$tech"_key_"$key"__"$steps"_steps_"$permutations"_perm_"$steps_start"_steps_start__run_"$run".log"
+
+		# ignores files in case the related run is still ongoing; the keyword for finished runs is "Overall" (runtime)
+		if [ `grep Overall $file | wc -l` == 0 ]; then
+			continue
+		fi
 
 		echo -n `tail -n $lines $file | head -n 1 | awk '{print $1}' | cut -c 2-`"	"
 	done
