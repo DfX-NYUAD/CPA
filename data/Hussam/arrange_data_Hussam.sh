@@ -17,8 +17,8 @@ traces=$3
 for tech in $tech_list
 do
 	mkdir "$tech"
-	scp dfx:/home/projects/power_sim/"$cipher"_regression/hussam_results/"$tech"/TFE*_txt/7nm_"$traces"_*.txt "$tech"/
-	scp dfx:/home/projects/power_sim/"$cipher"_regression/hussam_results/"$tech"/7nm_"$traces"_power_*.txt "$tech"/
+	scp dfx:/home/projects/power_sim/"$cipher"_regression/hussam_results_"$keys"/"$tech"/TFE*_txt/7nm_"$traces"_*.txt "$tech"/
+	scp dfx:/home/projects/power_sim/"$cipher"_regression/hussam_results_"$keys"/"$tech"/7nm_"$traces"_power_*.txt "$tech"/
 done
 
 # check whether all ciphertext files are the same

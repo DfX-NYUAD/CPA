@@ -4,7 +4,7 @@ if [ $# -lt 4 ]; then
        echo "Parameters required:"
        echo "1) List of technologies, as one parameter; e.g., \"7nm 32nm 45nm SDF\""
        echo "2) Number of keys"
-       echo "3) Name of cipher, e.g,. aes"
+       echo "3) Name of cipher, e.g,. aes_regression"
        echo "4) Number of traces"
        echo "5) Optional; name of cipher implementation, e.g., aes128_table_ecb"
        exit
@@ -33,13 +33,17 @@ do
 
 		tech="65nm"
 
-		scp dfx:/home/projects/power_sim/"$cipher"_regression/gls_sdf/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt SDF/
-		scp dfx:/home/projects/power_sim/"$cipher"_regression/gls_sdf/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt SDF/
+		echo "scp dfx:/home/projects/power_sim/"$cipher"/gls_sdf/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt SDF/"
+		scp dfx:/home/projects/power_sim/"$cipher"/gls_sdf/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt SDF/
+		echo "scp dfx:/home/projects/power_sim/"$cipher"/gls_sdf/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt SDF/"
+		scp dfx:/home/projects/power_sim/"$cipher"/gls_sdf/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt SDF/
 
 	# other pre-layout results
 	else
-		scp dfx:/home/projects/power_sim/"$cipher"_regression/gls/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt .
-		scp dfx:/home/projects/power_sim/"$cipher"_regression/ptpx/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt .
+		echo "scp dfx:/home/projects/power_sim/"$cipher"/gls/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt ."
+		scp dfx:/home/projects/power_sim/"$cipher"/gls/vcs_"$tech"_"$traces"_"$keys"/"$tech"_"$traces"_*.txt .
+		echo "scp dfx:/home/projects/power_sim/"$cipher"/ptpx/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt ."
+		scp dfx:/home/projects/power_sim/"$cipher"/ptpx/"$cipher_impl"_"$tech"/"$tech"_"$traces"_power_*.txt .
 	fi
 done
 
