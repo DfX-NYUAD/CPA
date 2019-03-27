@@ -114,10 +114,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		// also derive round keys
 		aes::key_expand(correct_key[0], correct_round_key);
 
-		std::cout << "Related round-10 key: ";
-		for (unsigned int i = 0; i < num_bytes; i++)
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[10].at(i)) << " ";
-		std::cout<<std::endl;
+		for (unsigned round = 1; round < 11; round++) {
+			std::cout << "Related round-" << std::dec << round << " key: ";
+			for (unsigned int i = 0; i < num_bytes; i++)
+				std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[round].at(i)) << " ";
+			std::cout<<std::endl;
+		}
 	}
 
 	// Handle the permutations file, if provided
