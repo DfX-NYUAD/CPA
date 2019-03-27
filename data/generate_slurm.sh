@@ -10,7 +10,7 @@ if [ $# -lt 8 ]; then
        echo "6) Number of keys?"
        echo "7) Name of cipher, e.g,. aes"
        echo "8) Number of traces"
-       echo "9) Optional; fully specified commands, as one parameter; \"-steps_stop 100 -rate_stop 99.9\""
+       echo "9) Optional; fully specified commands, as one parameter; default is \"-rate_stop 99.9\""
        exit
 fi
 
@@ -24,9 +24,15 @@ keys=$6
 cipher=$7
 traces=$8
 
-# optional parameters
-commands=$9
+# default values for optional parameters
+commands="-rate_stop 99.9"
 
+# reading in values for optional parameters, if given
+if [ "$9" != "" ]; then
+	commands=$9
+fi
+
+# cleanup old sbatch.sh, if any
 rm sbatch.sh
 
 for ((key = 1; key <= keys; key++))
