@@ -120,3 +120,6 @@ do
 		rm "$tech"* -r
 	fi
 done
+
+# reset x flag on txt files
+chmod -x *.txt
