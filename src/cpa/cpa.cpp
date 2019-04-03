@@ -499,7 +499,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			float HD_candidates_overall = 0;
 			for (unsigned int i = 0; i < num_bytes; i++) {
 
-				std::cout << "  Byte " << i << ": ";
+				std::cout << "  Byte " << std::dec << i << ": ";
 
 				// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
 				std::cout << (HD_candidates.at(i) / 255 / permutations) * 100.0 << " %\n";
