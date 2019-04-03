@@ -39,7 +39,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, bool verbose)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, bool verbose, bool key_expansion)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -66,6 +66,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	bool perm_file_write = false;
 	bool perm_file_read = false;
 	std::fstream perm_file;
+
+	unsigned round_key_index = 10;
 
 	// Obtain a time-based seed
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -111,13 +113,32 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_key[0].at(i)) << " ";
 		std::cout<<std::endl;
 
+		if (key_expansion) {
+			std::cout<<" That key is considered to be a full key; key expansion is applied" << std::endl;
+		}
+		else {
+			std::cout<<" That key is considered to be a round-10 key; key expansion is NOT applied" << std::endl;
+		}
+
 		// also derive round keys
+		//
+		// note that correct_round_key[0] contains the initial key
 		aes::key_expand(correct_key[0], correct_round_key);
 
-		std::cout << "Related round-10 key: ";
-		for (unsigned int i = 0; i < num_bytes; i++)
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[10].at(i)) << " ";
-		std::cout<<std::endl;
+		// now, in case key expansion shall not be considered, the relevant key to look at is correct_round_key[0], the initial key
+		if (!key_expansion) {
+			round_key_index = 0;
+		}
+
+		// log round keys only for key expansion
+		if (key_expansion) {
+			for (unsigned round = 1; round < 11; round++) {
+				std::cout << "  Related round-" << std::dec << round << " key: ";
+				for (unsigned int i = 0; i < num_bytes; i++)
+					std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[round].at(i)) << " ";
+				std::cout<<std::endl;
+			}
+		}
 	}
 
 	// Handle the permutations file, if provided
@@ -355,9 +376,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				}
 				avg_cor /= num_bytes;
 
-				// Reverse the AES key scheduling to retrieve the original key
-				aes::inv_key_expand(round_key, full_key);
-
 				if (verbose) {
 
 					// Report the key
@@ -371,21 +389,27 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key.at(i)) << " ";
 					std::cout<<"\n";
 
-					std::cout<<"Full key (in hex): ";
-					for (unsigned int i = 0; i < num_bytes; i++)
-						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key.at(i)) << " ";
-					std::cout<<"\n";
-
 					// Report the related correlation values
-					std::cout<<"Related Pearson correlation values are: ";
+					std::cout<<" Related Pearson correlation values are: ";
 
 					for (unsigned int i = 0; i < num_bytes; i++) {
 						std::cout << std::dec << max_correlation.at(i) << " ";
 					}
 					std::cout<<"\n";
 
-					std::cout<<"Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
+					std::cout<<"  Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
 					std::cout<<"\n";
+
+					if (key_expansion) {
+
+						// Reverse the AES key scheduling to retrieve the original key
+						aes::inv_key_expand(round_key, full_key);
+
+						std::cout<<" Full key (in hex): ";
+						for (unsigned int i = 0; i < num_bytes; i++)
+							std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key.at(i)) << " ";
+						std::cout<<"\n";
+					}
 
 					std::cout<<std::endl;
 				}
@@ -403,12 +427,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				for (unsigned int i = 0; i < num_bytes; i++) {
 
 					// check whether any byte is off
-					if  (round_key.at(i) != correct_round_key[10].at(i)) {
+					if  (round_key.at(i) != correct_round_key[round_key_index].at(i)) {
 						success = false;
 					}
 
 					// calculate the actual HD
-					HD += pm::Hamming_dist(round_key.at(i), correct_round_key[10].at(i), 8);
+					HD += pm::Hamming_dist(round_key.at(i), correct_round_key[round_key_index].at(i), 8);
 				}
 				if (success)
 					success_rate += 1;
@@ -427,7 +451,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						std::advance(iter, candidate);
 						round_key.at(i) = iter->second;
 
-						if  (round_key.at(i) == correct_round_key[10].at(i)) {
+						if  (round_key.at(i) == correct_round_key[round_key_index].at(i)) {
 
 							HD_candidates.at(i) += ((num_keys - 1) - candidate);
 
@@ -483,7 +507,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				// also track overall HD
 				HD_candidates_overall += HD_candidates.at(i);
 			}
-			std::cout << "  Avg across all bytes: ";
+			std::cout << "   Avg across all bytes: ";
 			std::cout << (HD_candidates_overall / (num_bytes * 255) / permutations) * 100.0 << " %\n";
 
 			// in case a stop rate is provided, abort steps once that success rate is reached

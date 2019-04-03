@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
 				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
+				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
 				"-nv          Optional: non-verbose logging\n"
 				"\n\n";
@@ -81,6 +82,7 @@ int main(int argc, char *argv[])
 
 	bool candidates = false;
 	bool verbose = true;
+	bool key_expansion = true;
 
 	// 1 are default values
 	int permutations = 1;
@@ -140,6 +142,10 @@ int main(int argc, char *argv[])
 		{
 			candidates = true;
 		}
+		else if (!strcmp(argv[i], "-no_key_exp"))
+		{
+			key_expansion = false;
+		}
 		else if (!strcmp(argv[i], "-nv"))
 		{
 			verbose = false;
@@ -194,7 +200,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose);
+		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
 	//}
 	//else
 	//{
