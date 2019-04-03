@@ -35,6 +35,10 @@ fi
 # cleanup old sbatch.sh, if any
 rm sbatch.sh
 
+# link relevant files
+ln -s /scratch/jk176/CPA/build/sca .
+ln -s /scratch/jk176/CPA/data/slurm.template .
+
 for ((key = 1; key <= keys; key++))
 do
 	for tech in $tech_list
