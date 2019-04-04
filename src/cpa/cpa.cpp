@@ -77,11 +77,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector< std::vector<unsigned char> > ciphertext;
 	std::vector< std::vector<unsigned char> > correct_key;
 	std::vector< std::vector<unsigned char> > correct_round_key (11, std::vector<unsigned char> (num_bytes));
-	std::vector<unsigned char> round_key (num_bytes);
-	std::vector<unsigned> correct_round_key_candiate_indices (num_bytes);
-	std::vector<unsigned char> full_key (num_bytes);
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
-	std::vector<float> max_correlation (num_bytes);
 	std::vector< std::vector<unsigned> > perm_from_file;
 
 	// Print information to terminal
@@ -262,10 +258,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout << "(" << data_pts << " / " << num_traces << ") traces = " << data_pts_perc << " % of all traces\n";
 		std::cout<<std::endl;
 
-		float overall_avg_cor = 0.0;
 		float success_rate = 0.0;
 		float HD = 0;
-		std::vector<float> HD_candidates (num_bytes, 0.0);
+		std::vector<float> correlation_HD (num_bytes, 0.0);
+		std::vector<unsigned char> round_key (num_bytes);
+		std::vector<float> max_correlation (num_bytes, 0.0);
+
+		// track correlation for all 256 key candidates and the correct key separately; correlation for correct key is in
+		// avg_correlation[256]
+		std::vector<float> avg_correlation (num_keys + 1, 0.0);
 
 		// init permutations vector from file
 		if (perm_file_read) {
@@ -282,7 +283,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 
 			if (verbose) {
-				std::cout<<"Consider permutation #" << std::dec << perm << "...\n";
+				std::cout<<" Consider permutation #" << std::dec << perm << "...\n";
 				std::cout<<std::endl;
 			}
 
@@ -316,7 +317,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
 			if (verbose) {
-				std::cout<<"Calculate Pearson correlation...\n";
+				std::cout<<" Calculate Pearson correlation...\n";
 				std::cout<<std::endl;
 			}
 
@@ -342,7 +343,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 
 			if (verbose) {
-				std::cout<<"Derive the key candidates...\n";
+				std::cout<<" Derive the key candidates...\n";
 				std::cout<<std::endl;
 			}
 
@@ -359,11 +360,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				candidate = num_keys - 1;
 			}
 
-			float avg_cor;
 			for (; candidate < num_keys; candidate++) {
 
 				// track max and average correlation
-				avg_cor = 0.0;
+				float avg_cor = 0.0;
 				for (int i = 0; i < num_bytes; i++) {
 
 					auto iter = r_pts.at(i).begin();
@@ -376,54 +376,55 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				}
 				avg_cor /= num_bytes;
 
+				// track avg correlation for all candidates across all permutations
+				avg_correlation.at(candidate) += avg_cor;
+
 				if (verbose) {
 
 					// Report the key
 					if (candidates) {
-						std::cout<<"Round-10 key candidate " << std::dec << candidate << " (in hex): ";
+						std::cout<<" Round-10 key candidate " << std::dec << candidate - num_keys + 1 << " (in hex): ";
 					}
 					else {
-						std::cout<<"Round-10 key (in hex):  ";
+						std::cout<<" Round-10 key prediction (in hex):  ";
 					}
 					for (unsigned int i = 0; i < num_bytes; i++)
 						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key.at(i)) << " ";
 					std::cout<<"\n";
 
 					// Report the related correlation values
-					std::cout<<" Related Pearson correlation values are: ";
+					std::cout<<"  Related Pearson correlation values are: ";
 
 					for (unsigned int i = 0; i < num_bytes; i++) {
 						std::cout << std::dec << max_correlation.at(i) << " ";
 					}
 					std::cout<<"\n";
 
-					std::cout<<"  Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
+					std::cout<<"   Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
 					std::cout<<"\n";
 
 					if (key_expansion) {
 
 						// Reverse the AES key scheduling to retrieve the original key
+						std::vector<unsigned char> full_key (num_bytes);
 						aes::inv_key_expand(round_key, full_key);
 
-						std::cout<<" Full key (in hex): ";
+						std::cout<<"  Full key (in hex): ";
 						for (unsigned int i = 0; i < num_bytes; i++)
 							std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key.at(i)) << " ";
 						std::cout<<"\n";
 					}
 
 					std::cout<<std::endl;
-				}
+				} // verbose
 			} // candidate
 
-			// track correlation across all permutations, but only for last candidate
-			overall_avg_cor += avg_cor;
-
-			// if correct key was provided, evaluate success and HD
+			// if correct key was provided, evaluate success rate, HD values, and avg correlation for correct-key bytes
 			//
 			if (!correct_key.empty()) {
 				bool success = true;
 
-				// track success rate and actual HD for that last candidate; always concerning round-10 key
+				// track success rate and actual HD for that last candidate; always concerning round-10 key (round_key)
 				for (unsigned int i = 0; i < num_bytes; i++) {
 
 					// check whether any byte is off
@@ -440,6 +441,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				// now, also track the correlation-related HD, i.e., for each round-key byte, track how far away was the
 				// correct byte from the picked, most probable one
 				//
+				float avg_cor = 0.0;
 				for (unsigned int i = 0; i < num_bytes; i++) {
 
 					// check for the correct byte among all the candidates, not only the last one
@@ -453,7 +455,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 						if  (round_key.at(i) == correct_round_key[round_key_index].at(i)) {
 
-							HD_candidates.at(i) += ((num_keys - 1) - candidate);
+							correlation_HD.at(i) += ((num_keys - 1) - candidate);
 
 							//std::cout << "byte: " << i;
 							//std::cout << "; ";
@@ -462,27 +464,57 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 							//std::cout << "HD_candidate: " << ((num_keys - 1) - candidate);
 							//std::cout << std::endl;
 							
+							// also track avg correlation for the correct key, by summing up the byte-level
+							// correlation here
+							max_correlation.at(i) = iter->first;
+							avg_cor += max_correlation.at(i);
+
 							// no need to check other candidates once the correct byte is found
 							break;
 						}
 					}
 				}
-			}
+
+				// derive avg correlation for correct key bytes
+				avg_correlation.at(num_keys) += (avg_cor / num_bytes);
+
+			} // correct key
 		} // perm
 
-		// overall stats, for current step size/set of traces considered
+		// correlation stats for all candidates
+		if (candidates) {
+			candidate = 0;
+		}
+		else {
+			candidate = num_keys - 1;
+		}
+
+		std::cout<<" Avg Pearson correlations, across all key bytes and permutations\n";
+
+		for (; candidate < num_keys; candidate++) {
+
+			if (candidates) {
+				std::cout<<"  For round-10 key candidate " << std::dec << candidate - num_keys + 1;
+			}
+			else {
+				std::cout<<"  For round-10 key prediction";
+			}
+			std::cout << ": " << avg_correlation.at(candidate) / permutations;
+			std::cout<<"\n";
+		}
+
+		// more stats in case correct key was provided
 		//
-		std::cout<<"The following stats are concerning the most probable round-10 key candidate across all permutations for this subset of trace";
-		std::cout<<"\n";
-
-		std::cout<<" Avg Pearson correlation (across all key bytes): ";
-		std::cout << overall_avg_cor / permutations;
-		std::cout<<"\n";
-
 		if (!correct_key.empty()) {
 
-			std::cout<<" Success rate: ";
-			std::cout<<"(" << success_rate << " / " << permutations << ") = ";
+			// correlation stats for correct key
+			std::cout << "  For correct round-10 key: ";
+			std::cout << avg_correlation.at(num_keys) / permutations;
+			std::cout << "\n";
+			std::cout << "\n";
+
+			std::cout << " Success rate: ";
+			std::cout << "(" << success_rate << " / " << permutations << ") = ";
 
 			success_rate /= permutations;
 			success_rate *= 100.0;
@@ -496,28 +528,37 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			std::cout<<" Avg correlation-centric Hamming distances:\n";
 
-			float HD_candidates_overall = 0;
+			float correlation_HD_overall = 0;
 			for (unsigned int i = 0; i < num_bytes; i++) {
 
 				std::cout << "  Byte " << std::dec << i << ": ";
 
 				// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
-				std::cout << (HD_candidates.at(i) / 255 / permutations) * 100.0 << " %\n";
+				std::cout << (correlation_HD.at(i) / 255 / permutations) * 100.0 << " %";
+				if (correlation_HD.at(i) > 0) {
+					std::cout << " (translates to being off by " << (correlation_HD.at(i) / permutations) << " candidates)";
+				}
+				std::cout<<"\n";
 
 				// also track overall HD
-				HD_candidates_overall += HD_candidates.at(i);
+				correlation_HD_overall += correlation_HD.at(i);
 			}
 			std::cout << "   Avg across all bytes: ";
-			std::cout << (HD_candidates_overall / (num_bytes * 255) / permutations) * 100.0 << " %\n";
-
-			// in case a stop rate is provided, abort steps once that success rate is reached
-			if ((rate_stop != -1) && (success_rate >= rate_stop)) {
-
-				std::cout<<std::endl;
-				break;
+			std::cout << (correlation_HD_overall / (num_bytes * 255) / permutations) * 100.0 << " %";
+			if (correlation_HD_overall > 0) {
+				std::cout << " (translates to being off by " << (correlation_HD_overall / num_bytes / permutations) << " candidates)\n";
 			}
 		}
 		std::cout<<std::endl;
+
+		// in case the correct key and a stop rate is provided, abort steps once that success rate is reached
+		//
+		if (!correct_key.empty()) {
+
+			if ((rate_stop != -1) && (success_rate >= rate_stop)) {
+				break;
+			}
+		}
 	}
 
 	if (perm_file_write) {
