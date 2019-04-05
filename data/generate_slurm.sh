@@ -36,7 +36,8 @@ fi
 rm sbatch.sh
 
 # link relevant files
-ln -s /scratch/jk176/CPA/build/sca .
+#ln -s /scratch/jk176/CPA/build/sca .
+ln -s /scratch/jk176/CPA_new_binary/build/sca .
 ln -s /scratch/jk176/CPA/data/slurm.template .
 
 for ((key = 1; key <= keys; key++))

@@ -39,9 +39,11 @@ do
 
 		# in case the related run has failed or is still ongoing (the keyword for finished runs is "Overall runtim"), then generate
 # an empty data point
-		if [ `grep 'Overall runtime' $file | wc -l` == 0 ]; then
+		if [ ! -f $file ]; then
 			echo -n "	"
-# in cas the relate run is done, parse for the last occurrence of "Working"; actually, the line after that last match; and print the number
+		elif [ `grep 'Overall runtime' $file | wc -l` == 0 ]; then
+			echo -n "	"
+# in case the relate run is done, parse for the last occurrence of "Working"; actually, the line after that last match; and print the number
 # of traces for that last step 
 		else
 			echo -n `grep "Working" -A 1 $file | tail -1 | awk '{print $1}' | cut -c 2-`"	"
