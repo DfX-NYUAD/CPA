@@ -1,7 +1,5 @@
 set(cpa_source_files
 	cpa.cpp
-	power-models.cpp
-	stats.cpp
 )
 
 if (OPENCL_LIB AND OPENCL_INC)

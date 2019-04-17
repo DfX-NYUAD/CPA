@@ -31,9 +31,24 @@ namespace pm
 {
 
 // Calculates the Hamming distance between two
-// values and is truncated to a specifed number
+// values and is truncated to a specified number
 // of bits
-int Hamming_dist(int num1, int num2, int bits);
+inline int Hamming_dist(int num1, int num2, int bits)
+{
+        int x;
+	int ham_dist;
+
+	x = (num1 ^ num2) & ((1 << bits) - 1);
+        ham_dist = 0;
+
+        while (x)
+        {
+                ham_dist += x & 1;
+                x >>= 1;
+        }
+
+        return ham_dist;
+}
 
 }//end namespace
 

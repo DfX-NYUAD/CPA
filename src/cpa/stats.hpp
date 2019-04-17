@@ -32,21 +32,71 @@
 namespace stats
 {
 
-// Calculates the max element in a vector within a given range
-float max_in_range(std::vector<float>& vec, unsigned int start, unsigned int range);
-
 // Calculates the mean of a given vector
-float mean(std::vector<float>& vec, std::vector<unsigned>& indices, int elements);
+inline float mean(std::vector<float>& vec, std::vector<unsigned>& indices, int elements)
+{
+	float sum;
+	float mean;
 
-// Calculates the sum of squares of a given vector
-float sum_of_squares(std::vector<float>& vec);
+	sum = 0;
+
+	for (int i = 0; i < elements; i++)
+		sum += vec[indices[i]];
+
+	mean = sum / elements;
+
+	return mean;
+};
 
 // Calculates the pearson product-moment correlation coefficient
 // of two equally sized vectors
-float pearsonr(std::vector<float>& a, std::vector<float>& b, std::vector<unsigned>& indices, int elements);
+//
+// Only work on the first "elements" indices for both a, b
+// For example, a[indices[0]], a[indices[1]], ..., a[indices[elements - 1]]
+inline float pearsonr(std::vector<float>& a, std::vector<float>& b, std::vector<unsigned>& indices, int elements)
+{
+	float a_mean;
+	float b_mean;
+	float cov;
+	float a_dev;
+	float b_dev;
+	float std_dev_a;
+	float std_dev_b;
+	float correlation;
 
-// Calculates the variance of a given vector
-float var(std::vector<float>& vec);
+	//if (a.size() != b.size())
+	//{
+	//	std::cerr<<"\n\nstats::pearsonr: input vectors are not same size\n";
+	//	return -2;
+	//}
+
+	a_mean = mean(a, indices, elements);
+	b_mean = mean(b, indices, elements);
+
+	cov = std_dev_a = std_dev_b = 0;
+
+	for (int i = 0; i < elements; i++)
+	{
+		a_dev = a[indices[i]] - a_mean;
+		b_dev = b[indices[i]] - b_mean;
+	
+		cov += a_dev * b_dev;
+
+		std_dev_a += std::pow(a_dev, 2.0f);
+		std_dev_b += std::pow(b_dev, 2.0f);
+	}
+	cov /= elements;
+	std_dev_a /= elements;
+	std_dev_b /= elements;
+
+	std_dev_a = std::sqrt(std_dev_a);
+	std_dev_b = std::sqrt(std_dev_b);
+
+	correlation = cov / (std_dev_a * std_dev_b);
+	
+	return correlation;
+	
+};
 
 } //end of namespace
 
