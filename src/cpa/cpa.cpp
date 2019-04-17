@@ -106,7 +106,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		csv::read_hex(key_path, correct_key);
 
 		for (unsigned int i = 0; i < num_bytes; i++)
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_key[0].at(i)) << " ";
+			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_key[0][i]) << " ";
 		std::cout<<std::endl;
 
 		if (key_expansion) {
@@ -131,7 +131,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			for (unsigned round = 1; round < 11; round++) {
 				std::cout << "  Related round-" << std::dec << round << " key: ";
 				for (unsigned int i = 0; i < num_bytes; i++)
-					std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[round].at(i)) << " ";
+					std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(correct_round_key[round][i]) << " ";
 				std::cout<<std::endl;
 			}
 		}
@@ -182,7 +182,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector<unsigned> trace_indices (num_traces);
 	// Prepare with all trace indices; required for shuffling/generating permutations in case they are not read in
 	for (unsigned i = 0; i < num_traces; i++) {
-		trace_indices.at(i) = i;
+		trace_indices[i] = i;
 	}
 
 	std::cout<<"Determine peak power values...\n";
@@ -202,7 +202,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				max_pt = data_pt;
 		}
 	
-		power_pts.at(i) = max_pt;
+		power_pts[i] = max_pt;
 	}
 
 	std::cout<<"Calculate Hamming distances...\n";
@@ -214,7 +214,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		// Get cipher for this particular trace
 		for (int j = 0; j < 4; j++)
 			for (int k = 0; k < 4; k++)
-				cipher.at(k).at(j) = ciphertext.at(i).at(j * 4 + k);
+				cipher[k][j] = ciphertext.at(i).at(j * 4 + k);
 
 		// Find ciphertext bytes at different stages for the Hamming 
 		// distance calculation
@@ -223,7 +223,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// Select byte
 			post_row = j / 4;
 			post_col = j % 4;
-			post_byte = cipher.at(post_row).at(post_col);
+			post_byte = cipher[post_row][post_col];
 
 			// Create all possible bytes that could have resulted
 			// selected byte
@@ -232,13 +232,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				// Undo AES-128 operations
 				key_byte = static_cast<unsigned char> (k);
 				aes::shift_rows(post_row, post_col, pre_row, pre_col);
-				pre_byte = cipher.at(pre_row).at(pre_col);
+				pre_byte = cipher[pre_row][pre_col];
 				pre_byte = aes::add_round_key(key_byte, pre_byte);
 				pre_byte = aes::inv_sub_bytes(pre_byte);
 				byte_id = pre_col * 4 + pre_row;
 			
 				// Find the Hamming distance between the bytes
-				Hamming_pts.at(byte_id).at(k).at(i) = pm::Hamming_dist(pre_byte, post_byte, 8);
+				Hamming_pts[byte_id][k][i] = pm::Hamming_dist(pre_byte, post_byte, 8);
 			}
 		}
 	}
@@ -279,7 +279,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			// reset Pearson correlation multimaps
 			for (int i = 0; i < num_bytes; i++) {
-				r_pts.at(i).clear();
+				r_pts[i].clear();
 			}
 
 			if (verbose) {
@@ -328,12 +328,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				{
 					// Pearson r correlation with power data
 					//
-					r_pts.at(i).emplace( std::make_pair(
+					r_pts[i].emplace( std::make_pair(
 
-								// Note that power_pts and Hamming_pts.at(i).at(j) may contain the data for
+								// Note that power_pts and Hamming_pts[i][j] may contain the data for
 								// all traces; only the #data_pts data points from trace_indices[0] ...
 								// trace_indices[data_pts - 1] will be considered
-								stats::pearsonr(power_pts, Hamming_pts.at(i).at(j), trace_indices, data_pts),
+								stats::pearsonr(power_pts, Hamming_pts[i][j], trace_indices, data_pts),
 
 								// keep track of the related key byte in the multimap; this allows for easy
 								// extraction of the key later on
@@ -366,18 +366,18 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				float avg_cor = 0.0;
 				for (int i = 0; i < num_bytes; i++) {
 
-					auto iter = r_pts.at(i).begin();
+					auto iter = r_pts[i].begin();
 					std::advance(iter, candidate);
 
-					round_key.at(i) = iter->second;
-					max_correlation.at(i) = iter->first;
+					round_key[i] = iter->second;
+					max_correlation[i] = iter->first;
 
-					avg_cor += max_correlation.at(i);
+					avg_cor += max_correlation[i];
 				}
 				avg_cor /= num_bytes;
 
 				// track avg correlation for all candidates across all permutations
-				avg_correlation.at(candidate) += avg_cor;
+				avg_correlation[candidate] += avg_cor;
 
 				if (verbose) {
 
@@ -389,14 +389,14 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						std::cout<<" Round-10 key prediction (in hex):  ";
 					}
 					for (unsigned int i = 0; i < num_bytes; i++)
-						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key.at(i)) << " ";
+						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key[i]) << " ";
 					std::cout<<"\n";
 
 					// Report the related correlation values
 					std::cout<<"  Related Pearson correlation values are: ";
 
 					for (unsigned int i = 0; i < num_bytes; i++) {
-						std::cout << std::dec << max_correlation.at(i) << " ";
+						std::cout << std::dec << max_correlation[i] << " ";
 					}
 					std::cout<<"\n";
 
@@ -411,7 +411,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 						std::cout<<"  Full key (in hex): ";
 						for (unsigned int i = 0; i < num_bytes; i++)
-							std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key.at(i)) << " ";
+							std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key[i]) << " ";
 						std::cout<<"\n";
 					}
 
@@ -428,12 +428,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				for (unsigned int i = 0; i < num_bytes; i++) {
 
 					// check whether any byte is off
-					if  (round_key.at(i) != correct_round_key[round_key_index].at(i)) {
+					if  (round_key[i] != correct_round_key[round_key_index][i]) {
 						success = false;
 					}
 
 					// calculate the actual HD
-					HD += pm::Hamming_dist(round_key.at(i), correct_round_key[round_key_index].at(i), 8);
+					HD += pm::Hamming_dist(round_key[i], correct_round_key[round_key_index][i], 8);
 				}
 				if (success)
 					success_rate += 1;
@@ -449,13 +449,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					// reverse order as correct byte is probably more toward the end
 					for (int candidate = num_keys - 1; candidate >= 0; candidate--) {
 
-						auto iter = r_pts.at(i).begin();
+						auto iter = r_pts[i].begin();
 						std::advance(iter, candidate);
-						round_key.at(i) = iter->second;
+						round_key[i] = iter->second;
 
-						if  (round_key.at(i) == correct_round_key[round_key_index].at(i)) {
+						if  (round_key[i] == correct_round_key[round_key_index][i]) {
 
-							correlation_HD.at(i) += ((num_keys - 1) - candidate);
+							correlation_HD[i] += ((num_keys - 1) - candidate);
 
 							//std::cout << "byte: " << i;
 							//std::cout << "; ";
@@ -466,8 +466,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 							
 							// also track avg correlation for the correct key, by summing up the byte-level
 							// correlation here
-							max_correlation.at(i) = iter->first;
-							avg_cor += max_correlation.at(i);
+							max_correlation[i] = iter->first;
+							avg_cor += max_correlation[i];
 
 							// no need to check other candidates once the correct byte is found
 							break;
@@ -476,7 +476,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				}
 
 				// derive avg correlation for correct key bytes
-				avg_correlation.at(num_keys) += (avg_cor / num_bytes);
+				avg_correlation[num_keys] += (avg_cor / num_bytes);
 
 			} // correct key
 		} // perm
@@ -499,7 +499,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			else {
 				std::cout<<"  For round-10 key prediction";
 			}
-			std::cout << ": " << avg_correlation.at(candidate) / permutations;
+			std::cout << ": " << avg_correlation[candidate] / permutations;
 			std::cout<<"\n";
 		}
 
@@ -509,7 +509,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			// correlation stats for correct key
 			std::cout << "  For correct round-10 key: ";
-			std::cout << avg_correlation.at(num_keys) / permutations;
+			std::cout << avg_correlation[num_keys] / permutations;
 			std::cout << "\n";
 			std::cout << "\n";
 
@@ -534,14 +534,14 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				std::cout << "  Byte " << std::dec << i << ": ";
 
 				// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
-				std::cout << (correlation_HD.at(i) / 255 / permutations) * 100.0 << " %";
-				if (correlation_HD.at(i) > 0) {
-					std::cout << " (translates to being off by " << (correlation_HD.at(i) / permutations) << " candidates)";
+				std::cout << (correlation_HD[i] / 255 / permutations) * 100.0 << " %";
+				if (correlation_HD[i] > 0) {
+					std::cout << " (translates to being off by " << (correlation_HD[i] / permutations) << " candidates)";
 				}
 				std::cout<<"\n";
 
 				// also track overall HD
-				correlation_HD_overall += correlation_HD.at(i);
+				correlation_HD_overall += correlation_HD[i];
 			}
 			std::cout << "   Avg across all bytes: ";
 			std::cout << (correlation_HD_overall / (num_bytes * 255) / permutations) * 100.0 << " %";
