@@ -259,8 +259,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout<<std::endl;
 
 		float success_rate = 0.0;
-		float HD = 0;
-		std::vector<float> correlation_HD (num_bytes, 0.0);
+		float key_HD = 0;
+		std::vector<float> key_byte_correlation_HD (num_bytes, 0.0);
 		std::vector<unsigned char> round_key (num_bytes);
 		std::vector<float> max_correlation (num_bytes, 0.0);
 
@@ -432,8 +432,8 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						success = false;
 					}
 
-					// calculate the actual HD
-					HD += pm::Hamming_dist(round_key[i], correct_round_key[round_key_index][i], 8);
+					// calculate the actual HD for the key candidate and the correct key
+					key_HD += pm::Hamming_dist(round_key[i], correct_round_key[round_key_index][i], 8);
 				}
 				if (success)
 					success_rate += 1;
@@ -455,7 +455,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 						if  (round_key[i] == correct_round_key[round_key_index][i]) {
 
-							correlation_HD[i] += ((num_keys - 1) - candidate);
+							key_byte_correlation_HD[i] += ((num_keys - 1) - candidate);
 
 							//std::cout << "byte: " << i;
 							//std::cout << "; ";
@@ -522,31 +522,31 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			std::cout << success_rate << " %";
 			std::cout<<"\n";
 
-			std::cout<<" Avg Hamming distance: ";
-			std::cout << (HD / 128 / permutations) * 100.0 << " %";
+			std::cout<<" Avg Hamming distance between correct round-key and round-key guess: ";
+			std::cout << (key_HD / 128 / permutations) * 100.0 << " %";
 			std::cout<<"\n";
 
-			std::cout<<" Avg correlation-centric Hamming distances:\n";
+			std::cout<<" Avg correlation-centric Hamming distances between correct round-key bytes and round-key byte guesses:\n";
 
-			float correlation_HD_overall = 0;
+			float key_byte_correlation_HD_overall = 0;
 			for (unsigned int i = 0; i < num_bytes; i++) {
 
 				std::cout << "  Byte " << std::dec << i << ": ";
 
 				// each byte could be off by 255 at max, namely when the least probable candidate was the correct one
-				std::cout << (correlation_HD[i] / 255 / permutations) * 100.0 << " %";
-				if (correlation_HD[i] > 0) {
-					std::cout << " (translates to being off by " << (correlation_HD[i] / permutations) << " candidates)";
+				std::cout << (key_byte_correlation_HD[i] / 255 / permutations) * 100.0 << " %";
+				if (key_byte_correlation_HD[i] > 0) {
+					std::cout << " (translates to being off by " << (key_byte_correlation_HD[i] / permutations) << " candidates)";
 				}
 				std::cout<<"\n";
 
 				// also track overall HD
-				correlation_HD_overall += correlation_HD[i];
+				key_byte_correlation_HD_overall += key_byte_correlation_HD[i];
 			}
 			std::cout << "   Avg across all bytes: ";
-			std::cout << (correlation_HD_overall / (num_bytes * 255) / permutations) * 100.0 << " %";
-			if (correlation_HD_overall > 0) {
-				std::cout << " (translates to being off by " << (correlation_HD_overall / num_bytes / permutations) << " candidates)\n";
+			std::cout << (key_byte_correlation_HD_overall / (num_bytes * 255) / permutations) * 100.0 << " %";
+			if (key_byte_correlation_HD_overall > 0) {
+				std::cout << " (translates to being off by " << (key_byte_correlation_HD_overall / num_bytes / permutations) << " candidates)\n";
 			}
 		}
 		std::cout<<std::endl;
