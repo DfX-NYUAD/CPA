@@ -520,13 +520,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			success_rate *= 100.0;
 
 			std::cout << success_rate << " %";
-			std::cout<<"\n";
+			std::cout << "\n";
 
-			std::cout<<" Avg Hamming distance between correct round-key and round-key guess: ";
+			std::cout << " Avg Hamming distance between correct round-key and round-key guess: ";
 			std::cout << (key_HD / 128 / permutations) * 100.0 << " %";
-			std::cout<<"\n";
+			std::cout << "\n";
 
-			std::cout<<" Avg correlation-centric Hamming distances between correct round-key bytes and round-key byte guesses:\n";
+			std::cout << " Avg correlation-centric Hamming distances between correct round-key bytes and round-key byte guesses:\n";
 
 			float key_byte_correlation_HD_overall = 0;
 			for (unsigned int i = 0; i < num_bytes; i++) {
@@ -548,8 +548,27 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			if (key_byte_correlation_HD_overall > 0) {
 				std::cout << " (translates to being off by " << (key_byte_correlation_HD_overall / num_bytes / permutations) << " candidates)\n";
 			}
+			std::cout<<"\n";
+
+			std::cout << " Avg Hamming distance between ciphertext and intermediate data before last round, considering the correct key -- represents the assumed toggles for the hypothetical power model: ";
+
+			float avg_HD = 0;
+			for (unsigned int i = 0; i < num_bytes; i++) {
+
+				for (int trace = 0; trace < data_pts; trace++) {
+					avg_HD += Hamming_pts
+						[i]
+						[ correct_round_key[round_key_index][i] ]
+						[ trace_indices[trace] ];
+				}
+			}
+
+			// HD with respect to 128 bit cipher and varying data_pts
+			avg_HD = 100.0 * (avg_HD / data_pts / 128);
+
+			std::cout << avg_HD << " %" << std::endl;
 		}
-		std::cout<<std::endl;
+		std::cout << std::endl;
 
 		// in case the correct key and a stop rate is provided, abort steps once that success rate is reached
 		//
