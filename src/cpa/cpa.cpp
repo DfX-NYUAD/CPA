@@ -505,23 +505,32 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				// track average HD and flips for text for last round
 				for (unsigned int i = 0; i < num_bytes; i++) {
 
+					// local variables; for this permutation
+					float avg_HD_ = 0.0f;
+					float avg_0_1_flips_ = 0.0f;
+					float avg_1_0_flips_ = 0.0f;
+
 					for (int trace = 0; trace < data_pts; trace++) {
 
-						avg_HD += Hamming_pts
+						avg_HD_ += Hamming_pts
 							[i]
 							[ correct_round_key[round_key_index][i] ]
 							[ trace_indices[trace] ];
 
-						avg_0_1_flips += Hamming_pts__0_1_flips
+						avg_0_1_flips_ += Hamming_pts__0_1_flips
 							[i]
 							[ correct_round_key[round_key_index][i] ]
 							[ trace_indices[trace] ];
 
-						avg_1_0_flips += Hamming_pts__1_0_flips
+						avg_1_0_flips_ += Hamming_pts__1_0_flips
 							[i]
 							[ correct_round_key[round_key_index][i] ]
 							[ trace_indices[trace] ];
 					}
+
+					avg_HD += (avg_HD_ / data_pts);
+					avg_0_1_flips += (avg_0_1_flips_ / data_pts);
+					avg_1_0_flips += (avg_1_0_flips_ / data_pts);
 				}
 
 			} // correct key
@@ -597,15 +606,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			std::cout << "\n Statistics for text before last round and after last round (the latter is the ciphertext), considering the correct last-round key:" << std::endl;
 
-			// HD with respect to 128 bit cipher and varying data_pts and permutations; in percent
-			avg_HD = (avg_HD / 128 / data_pts / permutations) * 100;
+			// HD with respect to 128 bit cipher; in percent
+			avg_HD = (avg_HD / 128 / permutations) * 100;
 
 			std::cout << "  Avg Hamming distance (over 128 key bits): ";
 			std::cout << avg_HD << " %" << std::endl;
 
-			// average flips across all 128 bits, but averaged over data_pts, i.e., considered traces, and permutations
-			avg_0_1_flips = (avg_0_1_flips / data_pts / permutations);
-			avg_1_0_flips = (avg_1_0_flips / data_pts / permutations);
+			// average flips across all 128 bits 
+			avg_0_1_flips = (avg_0_1_flips / permutations);
+			avg_1_0_flips = (avg_1_0_flips / permutations);
 			std::cout << "   Avg 0->1 flips: " << avg_0_1_flips << std::endl;
 			std::cout << "   Avg 1->0 flips: " << avg_1_0_flips << std::endl;
 
