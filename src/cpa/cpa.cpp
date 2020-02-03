@@ -178,6 +178,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector< std::vector< std::vector<float> > > Hamming_pts 
 		( num_bytes, std::vector< std::vector<float> > 
 		(256, std::vector<float> (num_traces, 0.0f) ) );
+	std::vector< std::vector< std::vector<unsigned int> > > Hamming_pts__0_1_flips
+		( num_bytes, std::vector< std::vector<unsigned int> > 
+		(256, std::vector<unsigned int> (num_traces, 0) ) );
+	std::vector< std::vector< std::vector<unsigned int> > > Hamming_pts__1_0_flips
+		( num_bytes, std::vector< std::vector<unsigned int> > 
+		(256, std::vector<unsigned int> (num_traces, 0) ) );
 
 	std::vector<unsigned> trace_indices (num_traces);
 	// Prepare with all trace indices; required for shuffling/generating permutations in case they are not read in
@@ -239,6 +245,20 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			
 				// Find the Hamming distance between the bytes
 				Hamming_pts[byte_id][k][i] = pm::Hamming_dist(pre_byte, post_byte, 8);
+
+				// also track the 0->1 and 1->0 flips, not only HD
+				Hamming_pts__0_1_flips[byte_id][k][i] = 0;
+				Hamming_pts__1_0_flips[byte_id][k][i] = 0;
+				for (unsigned char b = 1 << 7; b > 0; b = b / 2)  {
+					// 0->1
+					if (!(pre_byte & b) && (post_byte & b))
+						Hamming_pts__0_1_flips[byte_id][k][i]++;
+					// 1->0
+					if ((pre_byte & b) && !(post_byte & b))
+						Hamming_pts__1_0_flips[byte_id][k][i]++;
+				}
+				//std::cout << "0->1 flips: " << Hamming_pts__0_1_flips[byte_id][k][i] << std::endl;
+				//std::cout << "1->0 flips: " << Hamming_pts__1_0_flips[byte_id][k][i] << std::endl;
 			}
 		}
 	}
@@ -550,23 +570,44 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 			std::cout<<"\n";
 
-			std::cout << " Avg Hamming distance between ciphertext and intermediate data before last round, considering the correct key -- represents the assumed toggles for the hypothetical power model: ";
+			std::cout<<"\n";
+			std::cout << " Statistics for text before last round and after last round (the latter is the ciphertext), considering the correct last-round key:" << std::endl;
 
 			float avg_HD = 0;
+			float avg_0_1_flips = 0;
+			float avg_1_0_flips = 0;
 			for (unsigned int i = 0; i < num_bytes; i++) {
 
 				for (int trace = 0; trace < data_pts; trace++) {
+
 					avg_HD += Hamming_pts
+						[i]
+						[ correct_round_key[round_key_index][i] ]
+						[ trace_indices[trace] ];
+
+					avg_0_1_flips += Hamming_pts__0_1_flips
+						[i]
+						[ correct_round_key[round_key_index][i] ]
+						[ trace_indices[trace] ];
+
+					avg_1_0_flips += Hamming_pts__1_0_flips
 						[i]
 						[ correct_round_key[round_key_index][i] ]
 						[ trace_indices[trace] ];
 				}
 			}
 
-			// HD with respect to 128 bit cipher and varying data_pts
-			avg_HD = 100.0 * (avg_HD / data_pts / 128);
+			// HD with respect to 128 bit cipher and varying data_pts; in percent
+			avg_HD = (avg_HD / data_pts / 128) * 100;
 
+			std::cout << "  Avg Hamming distance (over 128 key bits): ";
 			std::cout << avg_HD << " %" << std::endl;
+
+			// average flips across all 128 bits, but averaged over data_pts, i.e., considered traces
+			avg_0_1_flips /= data_pts;
+			avg_1_0_flips /= data_pts;
+			std::cout << "   Avg 0->1 flips: " << avg_0_1_flips << std::endl;
+			std::cout << "   Avg 1->0 flips: " << avg_1_0_flips << std::endl;
 		}
 		std::cout << std::endl;
 
