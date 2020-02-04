@@ -184,9 +184,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	std::vector< std::vector< std::vector<unsigned int> > > Hamming_pts__1_0_flips
 		( num_bytes, std::vector< std::vector<unsigned int> > 
 		(256, std::vector<unsigned int> (num_traces, 0) ) );
-	std::vector< std::vector< std::vector<int> > > Hamming_pts__flips_HD
-		( num_bytes, std::vector< std::vector<int> > 
-		(256, std::vector<int> (num_traces, 0) ) );
 
 	std::vector<unsigned> trace_indices (num_traces);
 	// Prepare with all trace indices; required for shuffling/generating permutations in case they are not read in
@@ -261,25 +258,18 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						Hamming_pts__1_0_flips[byte_id][k][i]++;
 				}
 
-				// also track the HD between the 0->1 and 1-> 0 flips; has direct impact on accuracy of simple HD power model !
-				// 
-				// note that absolute HD is calculated here, not using abs -- this allows to differentiate between bias towards
-				// 0->1 or 1->0 flips!
-				Hamming_pts__flips_HD[byte_id][k][i] = static_cast<int>(Hamming_pts__0_1_flips[byte_id][k][i] - Hamming_pts__1_0_flips[byte_id][k][i]);
-
 				//// dbg logging
-				//std::cout << "pre_byte:  0b";
+				//std::cout << "DBG> pre_byte:  0b";
 				//for (int i = 1 << (8 - 1); i > 0; i = i / 2) 
 				//	(pre_byte & i)? printf("1"): printf("0");
 				//std::cout << std::endl;
-				//std::cout << "post_byte: 0b";
+				//std::cout << "DBG> post_byte: 0b";
 				//for (int i = 1 << (8 - 1); i > 0; i = i / 2) 
 				//	(post_byte & i)? printf("1"): printf("0");
 				//std::cout << std::endl;
-				//std::cout << " HD(pre_byte, post_byte, 8): " << Hamming_pts[byte_id][k][i] << std::endl;
-				//std::cout << " 0->1 flips: " << Hamming_pts__0_1_flips[byte_id][k][i] << std::endl;
-				//std::cout << " 1->0 flips: " << Hamming_pts__1_0_flips[byte_id][k][i] << std::endl;
-				//std::cout << " HD between flips: " << std::dec << Hamming_pts__flips_HD[byte_id][k][i] << std::endl;
+				//std::cout << "DBG>  HD(pre_byte, post_byte, 8): " << Hamming_pts[byte_id][k][i] << std::endl;
+				//std::cout << "DBG>  0->1 flips: " << Hamming_pts__0_1_flips[byte_id][k][i] << std::endl;
+				//std::cout << "DBG>  1->0 flips: " << Hamming_pts__1_0_flips[byte_id][k][i] << std::endl;
 			}
 		}
 	}
@@ -540,62 +530,75 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					float avg_HD__ = 0.0f;
 					float avg_0_1_flips__ = 0.0f;
 					float avg_1_0_flips__ = 0.0f;
-					float avg_flips_HD__ = 0.0f;
 
 					for (unsigned int i = 0; i < num_bytes; i++) {
 
 						avg_HD__ += Hamming_pts
 							[i]
 							[ correct_round_key[round_key_index][i] ]
-							[ trace_indices[trace] ];
+							[ trace_indices[trace] ]
+								;
 
 						avg_0_1_flips__ += Hamming_pts__0_1_flips
 							[i]
 							[ correct_round_key[round_key_index][i] ]
-							[ trace_indices[trace] ];
+							[ trace_indices[trace] ]
+								;
 
 						avg_1_0_flips__ += Hamming_pts__1_0_flips
 							[i]
 							[ correct_round_key[round_key_index][i] ]
-							[ trace_indices[trace] ];
-
-						avg_flips_HD__ += Hamming_pts__flips_HD
-							[i]
-							[ correct_round_key[round_key_index][i] ]
-							[ trace_indices[trace] ];
+							[ trace_indices[trace] ]
+								;
 					}
 
-					// flips, artificial normalization (should help to limit rounding errors for large number of
+					// flips, normalize already here (should help to limit rounding errors for large number of
 					// data_pts/traces)
-					avg_0_1_flips_ += (avg_0_1_flips__ / 128);
-					avg_1_0_flips_ += (avg_1_0_flips__ / 128);
-					// absolute HD, normally not to be normalized
-					avg_flips_HD_ += (avg_flips_HD__ / 128);
+					avg_0_1_flips_ += (avg_0_1_flips__ / data_pts);
+					avg_1_0_flips_ += (avg_1_0_flips__ / data_pts);
 
-					// regular HD, normalize over all 128 bits in general
-					avg_HD_ += (avg_HD__ / 128);
+					//  HD between all flips for this text
+					avg_flips_HD_ += (std::abs(avg_0_1_flips__ - avg_1_0_flips__) / data_pts);
+
+					// regular HD, normalize over 128 bits and also over data_pts already here
+					avg_HD_ += (avg_HD__ / 128 / data_pts);
+
+					//// dbg logging
+					////
+					//std::cout << "DBG> Trace " << std::dec << (trace + 1) << "/" << data_pts << std::endl;
+					//std::cout << "DBG>  0->1 flips: " << avg_0_1_flips__ << std::endl;
+					//std::cout << "DBG>  1->0 flips: " << avg_1_0_flips__ << std::endl;
+					//std::cout << "DBG>  HD between flips: " << std::abs(avg_0_1_flips__ - avg_1_0_flips__) << std::endl;
+					//// recover normalization to display actual values; nromalize still over current trace
+					//std::cout << "DBG> Avg 0->1 flips: " << (data_pts * avg_0_1_flips_ / (trace + 1)) << std::endl;
+					//std::cout << "DBG> Avg 1->0 flips: " << (data_pts * avg_1_0_flips_ / (trace + 1)) << std::endl;
+					//std::cout << "DBG> Avg HD between flips: " << (data_pts * avg_flips_HD_ / (trace + 1)) << std::endl;
+					//std::cout << "DBG> " << std::endl;
 				}
 
-				// sum up averages normalized over data_pts/traces; will be normalized over permutations later on
-				avg_HD += (avg_HD_ / data_pts);
-				// also restore artificial normalization
-				avg_flips_HD += 128 * (avg_flips_HD_ / data_pts);
-				avg_0_1_flips += 128 * (avg_0_1_flips_ / data_pts);
-				avg_1_0_flips += 128 * (avg_1_0_flips_ / data_pts);
+				// sum up averages
+				// normalized already above over data_pts/traces; will be normalized over permutations later on
+				avg_HD += avg_HD_;
+				avg_flips_HD += avg_flips_HD_;
+				avg_0_1_flips += avg_0_1_flips_;
+				avg_1_0_flips += avg_1_0_flips_;
 
 				if (verbose) {
 					std::cout << "  Statistics for text before last round and after last round (the latter is the ciphertext), considering the correct round-key:" << std::endl;
 
-					std::cout << "   Avg Hamming distance for texts for this permutation: " << (avg_HD_ / data_pts) * 100 << " %" << std::endl;
+					std::cout << "   Avg Hamming distance for texts for this permutation: " << avg_HD_ * 100 << " %" << std::endl;
 
-					std::cout << "   Avg 0->1 flips (for all 128 bits of text) for this permutation: " << 128 * (avg_0_1_flips_ / data_pts) << std::endl;
-					std::cout << "   Avg 1->0 flips (for all 128 bits of text) for this permutation: " << 128 * (avg_1_0_flips_ / data_pts) << std::endl;
+					std::cout << "   Avg 0->1 flips (for all 128 bits of text) for this permutation: " << avg_0_1_flips_ << std::endl;
+					std::cout << "   Avg 1->0 flips (for all 128 bits of text) for this permutation: " << avg_1_0_flips_ << std::endl;
 
-					float std_dev_flips = std::abs(128 * (avg_0_1_flips_ / data_pts) - 128 * (avg_1_0_flips_ / data_pts)) / std::sqrt(2.0);
+					float std_dev_flips = std::abs(avg_0_1_flips_ - avg_1_0_flips_) / std::sqrt(2.0);
 					std::cout << "    Std dev for the two averages (of 0->1 and 1->0 flips): " << std_dev_flips << std::endl;
 
-					std::cout << "   Avg absolute Hamming distance for flips for this permutation: " << 128 * (avg_flips_HD_ / data_pts) << std::endl;
-					std::cout << "    Note that a negative distances means more 1->0 transitions, whereas a positive number means more 0->1 transitions" << std::endl;
+					std::cout << "   Avg Hamming distance for flips for this permutation: " << avg_flips_HD_ << std::endl;
+					std::cout << "    Note that this Hamming distance is computed for each trace and only then averaged; and note the following:" << std::endl;
+					std::cout << "    a) that is essential as the imbalance of flips (expressed by this Hamming distance) impacts the related power estimation directly, i.e., the accuracy of the employed Hamming distance power model" << std::endl;
+					std::cout << "    b) therefore, the average Hamming distance _cannot_ be derived from the above reported averages for flips" << std::endl;
+					std::cout << std::endl;
 				}
 
 			} // correct key
@@ -697,8 +700,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// HD; normalized over permutations
 			// note that the absolute HD for flips is _not_ in percent
 			avg_flips_HD /= permutations;
-			std::cout << "  Avg absolute Hamming distance for flips: " << avg_flips_HD << std::endl;
-			std::cout << "   Note that a negative distances means more 1->0 transitions, whereas a positive number means more 0->1 transitions" << std::endl;
+			std::cout << "  Avg Hamming distance for flips: " << avg_flips_HD << std::endl;
+			std::cout << "   Note that this Hamming distance is computed for each trace and only then averaged;" << std::endl;
+			std::cout << "   a) that is important as the imbalance of flips (Hamming distance) directly impacts the related power estimation, i.e., the accuracy of the employed Hamming distance power model" << std::endl;
+			std::cout << "   b) therefore, the average Hamming distance _cannot_ be derived from the above reported averages for flips" << std::endl;
 		}
 		// correct key was not provided; report on key prediction
 		else {
@@ -719,7 +724,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				std::cout<<"\n";
 			}
 		}
-
 		std::cout << std::endl;
 
 		// in case the correct key and a stop rate is provided, abort steps once that success rate is reached
