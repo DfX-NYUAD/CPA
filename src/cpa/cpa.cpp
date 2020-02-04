@@ -307,7 +307,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 
 			if (verbose) {
-				std::cout<<" Consider permutation #" << std::dec << perm << "...\n";
+				std::cout<<" Start permutation #" << std::dec << perm << "...\n";
 				std::cout<<std::endl;
 			}
 
@@ -341,7 +341,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// Perform Pearson r correlation for this permutation Hamming distance sets and power data
 
 			if (verbose) {
-				std::cout<<" Calculate Pearson correlation...\n";
+				std::cout<<"  Calculate Pearson correlation...\n";
 				std::cout<<std::endl;
 			}
 
@@ -367,7 +367,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			}
 
 			if (verbose) {
-				std::cout<<" Derive the key candidates...\n";
+				std::cout<<"  Derive the key candidates...\n";
 				std::cout<<std::endl;
 			}
 
@@ -407,24 +407,24 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 					// Report the key
 					if (candidates) {
-						std::cout<<" Round-10 key candidate " << std::dec << candidate - num_keys + 1 << " (in hex): ";
+						std::cout<<"  Round-10 key candidate " << std::dec << candidate - num_keys + 1 << " (in hex): ";
 					}
 					else {
-						std::cout<<" Round-10 key prediction (in hex):  ";
+						std::cout<<"  Round-10 key prediction (in hex):  ";
 					}
 					for (unsigned int i = 0; i < num_bytes; i++)
 						std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key[i]) << " ";
 					std::cout<<"\n";
 
 					// Report the related correlation values
-					std::cout<<"  Related Pearson correlation values are: ";
+					std::cout<<"   Related Pearson correlation values are: ";
 
 					for (unsigned int i = 0; i < num_bytes; i++) {
 						std::cout << std::dec << max_correlation[i] << " ";
 					}
 					std::cout<<"\n";
 
-					std::cout<<"   Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
+					std::cout<<"    Avg Pearson correlation across all round-10 key bytes: " << avg_cor;
 					std::cout<<"\n";
 
 					if (key_expansion) {
@@ -433,13 +433,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 						std::vector<unsigned char> full_key (num_bytes);
 						aes::inv_key_expand(round_key, full_key);
 
-						std::cout<<"  Full key (in hex): ";
+						std::cout<<"   Full key (in hex): ";
 						for (unsigned int i = 0; i < num_bytes; i++)
 							std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key[i]) << " ";
 						std::cout<<"\n";
 					}
-
 					std::cout<<std::endl;
+
 				} // verbose
 			} // candidate
 
@@ -534,6 +534,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				}
 
 			} // correct key
+
+			if (verbose) {
+				std::cout<<" Stop permutation #" << std::dec << perm << "...\n";
+				std::cout<<std::endl;
+			}
 		} // perm
 
 		// correlation stats for all candidates
@@ -623,6 +628,26 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 			std::cout << "   Std dev of 0->1 and 1->0 flips: " << std_dev_flips << std::endl;
 		}
+		// correct key was not provided; report on key prediction
+		else {
+			std::cout<<" Round-10 key prediction (in hex); just the one from the last permutation considered for that step:  ";
+			for (unsigned int i = 0; i < num_bytes; i++)
+				std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(round_key[i]) << " ";
+			std::cout<<"\n";
+
+			if (key_expansion) {
+
+				// Reverse the AES key scheduling to retrieve the original key
+				std::vector<unsigned char> full_key (num_bytes);
+				aes::inv_key_expand(round_key, full_key);
+
+				std::cout<<"  Full key (in hex): ";
+				for (unsigned int i = 0; i < num_bytes; i++)
+					std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(full_key[i]) << " ";
+				std::cout<<"\n";
+			}
+		}
+
 		std::cout << std::endl;
 
 		// in case the correct key and a stop rate is provided, abort steps once that success rate is reached
