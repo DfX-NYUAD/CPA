@@ -595,7 +595,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 					std::cout << "    Std dev for the two averages (of 0->1 and 1->0 flips): " << std_dev_flips << std::endl;
 
 					std::cout << "   Avg Hamming distance for flips for this permutation: " << avg_flips_HD_ << std::endl;
-					std::cout << "    Note that this Hamming distance is computed for each trace and only then averaged; and note the following:" << std::endl;
+					std::cout << "    Note that this Hamming distance is computed for each trace and only then averaged, and note the following as well:" << std::endl;
 					std::cout << "    a) that is essential as the imbalance of flips (expressed by this Hamming distance) impacts the related power estimation directly, i.e., the accuracy of the employed Hamming distance power model" << std::endl;
 					std::cout << "    b) therefore, the average Hamming distance _cannot_ be derived from the above reported averages for flips" << std::endl;
 					std::cout << std::endl;
@@ -701,7 +701,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// note that the absolute HD for flips is _not_ in percent
 			avg_flips_HD /= permutations;
 			std::cout << "  Avg Hamming distance for flips: " << avg_flips_HD << std::endl;
-			std::cout << "   Note that this Hamming distance is computed for each trace and only then averaged;" << std::endl;
+			std::cout << "   Note that this Hamming distance is computed for each trace and only then averaged, and note the following as well:" << std::endl;
 			std::cout << "   a) that is important as the imbalance of flips (Hamming distance) directly impacts the related power estimation, i.e., the accuracy of the employed Hamming distance power model" << std::endl;
 			std::cout << "   b) therefore, the average Hamming distance _cannot_ be derived from the above reported averages for flips" << std::endl;
 		}
