@@ -41,23 +41,11 @@ inline int Hamming_dist(int num1, int num2, int bits)
 	x = (num1 ^ num2) & ((1 << bits) - 1);
         ham_dist = 0;
 
-	//std::cout << "num1: " << num1 << "; 0b";
-	//for (int i = 1 << (bits - 1); i > 0; i = i / 2) 
-	//	(num1 & i)? printf("1"): printf("0");
-	//std::cout << std::endl;
-
-	//std::cout << "num2: " << num2 << "; 0b";
-	//for (int i = 1 << (bits - 1); i > 0; i = i / 2) 
-	//	(num2 & i)? printf("1"): printf("0");
-	//std::cout << std::endl;
-
         while (x)
         {
                 ham_dist += x & 1;
                 x >>= 1;
         }
-
-	//std::cout << "HD: " << ham_dist << std::endl;
 
         return ham_dist;
 }
