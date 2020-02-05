@@ -357,6 +357,9 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 				std::cout<<std::endl;
 			}
 
+			// Derive correlation per key byte, to handle complexity, by decomposing into 16 * 2^8 candidates; ideally, correlation
+			// should be over all possible 2^128 key candidates but that's intractable
+			//
 			#pragma omp parallel for
 			for (int i = 0; i < num_bytes; i++)
 			{
