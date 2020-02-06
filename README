@@ -10,8 +10,7 @@ and expanding the range of analysis and encryption algorithms for the future.
 
 Edits by Johann Knechtel, NYU Abu Dhabi (johann at nyu dot edu)
 
-	Original obtained from https://tescase.coe.neu.edu/?current_page=SOURCE_
-	CODE&software=aestool in March 2019
+	Original obtained from https://tescase.coe.neu.edu/?current_page=SOURCE_CODE&software=aestool in March 2019
 
 	Overall, the code base remains, but there are several extensions implemented. For a start, invoke ./sca --help
 
@@ -91,6 +90,6 @@ Usage of the GPU-based CPA algorithm:
 In the directory labelled 'data', 3000 power traces collected from a SASEBO-GII FPGA
 are provided to test the Side Channel Analysis Tool.
 
-	Notes Johann: the format of those traces won't work, please use the other test files available in data/trials
+	Notes Johann: the format of those traces won't work anymore; please consider the other data available in data/trials
 
 ------------------------------------------------------------------------------
