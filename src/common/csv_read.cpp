@@ -218,7 +218,7 @@ bool csv::read_perm_file(std::fstream& file,
 	// sanity check on data_pts
 	if (data_pt_index < (data_pts - 1)) {
 		std::cerr<<"Error: the permutations file does not contain enough data points for current step " << s << std::endl;
-		std::cerr<<" perm_index=" << perm_index << "; data_pt_index=" << data_pt_index << std::endl;
+		std::cerr<<" data_pt_index=" << data_pt_index "; data_pts=" << data_pts << std::endl;
 
 		exit(1);
 	}
