@@ -56,7 +56,7 @@ do
 			line_string=""
 
 			# build up CSV line
-			for word in `cat $lines $file | grep "$keyword" | awk '{print $'$word_index'}'`
+			for word in `grep "$keyword" $file | awk '{print $'$word_index'}'`
 			do
 				line_string=$line_string""$word", "
 			done
@@ -64,7 +64,7 @@ do
 			# finally, print out while dropping last ", "
 			echo ${line_string::-2}
 		else
-			cat $lines $file | grep "$keyword"
+			cat $file | grep "$keyword"
 		fi
 	done
 done
