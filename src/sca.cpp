@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 				"                if not provided, stop according to ``steps_stop''\n"
 				"-perm_file   Optional: the file with permutations indices to consider per subset of traces;\n"
 				"                if not provided, random permutations are generated;\n"
+				"                if provided, make sure to specify -steps as well (and optionally -steps_start -steps_top);\n"
 				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
@@ -84,12 +85,12 @@ int main(int argc, char *argv[])
 	bool verbose = true;
 	bool key_expansion = true;
 
-	// 1 are default values
-	int permutations = 1;
-	int steps = 1;
-	int steps_start = 1;
-	// -1 indicates that these parameters have not been set
+	// -1 indicates that these parameters have not been set yet
+	int permutations = -1;
+	int steps = -1;
+	int steps_start = -1;
 	int steps_stop = -1;
+	// -1 here means that it should not be used
 	float rate_stop = -1;
 	
 	std::string data_path;
@@ -185,14 +186,37 @@ int main(int argc, char *argv[])
 	// Make sure the user provides a data file and ciphertext file
 	if (!data_path_set || !ct_path_set)
 	{
-		std::cerr<<input_msg;
+		std::cerr << input_msg;
 		return 1;
 	}
 
-	// Set steps_stop if not provided by user
+	// make sure the user provides steps to be considered in case a permutations file is provided
+	if ((perm_path != "") && (steps == -1)) {
+
+		std::cerr << "When providing a permutation file, make sure to provide the -steps parameter as well according to that permutation file!" << std::endl;
+		std::cerr << " Note that you can also further specify -steps_start and/or -steps_stop to skip some steps." << std::endl;
+	}
+	// make sure the user provides permutations to be considered in case a permutations file is provided
+	if ((perm_path != "") && (permutations == -1)) {
+
+		std::cerr << "When providing a permutation file, make sure to provide the -perm parameter as well, to specify the number of permutations to be considered per step!" << std::endl;
+		std::cerr << " Note that setting -perm to N with N being less than M permutations available in the permutation file means that only the first N permutations are considered for each step." << std::endl;
+	}
+
+	// Set parameters to default values if not provided by user
+	if (permutations == -1) {
+		permutations = 1;
+	}
+	if (steps == -1) {
+		steps = 1;
+	}
 	if (steps_stop == -1) {
 		steps_stop = steps;
 	}
+	if (steps_start == -1) {
+		steps_start = 1;
+	}
+	// rate_stop not be initialized if not provided; -1 here means that it should not be used
 
 	// track start time
 	auto start_time = std::chrono::system_clock::now();
