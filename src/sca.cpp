@@ -195,12 +195,14 @@ int main(int argc, char *argv[])
 
 		std::cerr << "When providing a permutation file, make sure to provide the -steps parameter as well according to that permutation file!" << std::endl;
 		std::cerr << " Note that you can also further specify -steps_start and/or -steps_stop to skip some steps." << std::endl;
+		return 1;
 	}
 	// make sure the user provides permutations to be considered in case a permutations file is provided
 	if ((perm_path != "") && (permutations == -1)) {
 
 		std::cerr << "When providing a permutation file, make sure to provide the -perm parameter as well, to specify the number of permutations to be considered per step!" << std::endl;
 		std::cerr << " Note that setting -perm to N with N being less than M permutations available in the permutation file means that only the first N permutations are considered for each step." << std::endl;
+		return 1;
 	}
 
 	// Set parameters to default values if not provided by user
