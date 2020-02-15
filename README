@@ -90,6 +90,6 @@ Usage of the GPU-based CPA algorithm:
 In the directory labelled 'data', 3000 power traces collected from a SASEBO-GII FPGA
 are provided to test the Side Channel Analysis Tool.
 
-	Notes Johann: the format of those traces won't work anymore; please consider the other data available in data/trials
+	Notes Johann: the format of those traces won't work anymore; please consider the other data available in data/backup/trials
 
 ------------------------------------------------------------------------------
