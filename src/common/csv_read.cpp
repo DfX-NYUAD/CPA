@@ -63,8 +63,14 @@ void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 		if (!linestream.eof() && byte[2] != ' ')
 			linestream.unget();
 
-		tmp = std::string("0x" + std::string(byte, 0, 2));
+		// NOTE this re-use of tmp, being declared outside of loop, lead to glibc errors: *** glibc detected *** ../../../build/sca:
+		// free(): invalid pointer: 0x000000000083ade8 ***
+		// that is, for g++-7 (GCC) 7.3.1 20180303 (Red Hat 7.3.1-5)
+		//tmp = std::string("0x" + std::string(byte, 0, 2));
+
+		std::string tmp = std::string("0x" + std::string(byte, 0, 2));
 		//std::cout << tmp << std::endl;
+
 		val = atof(tmp.c_str());
 		out.push_back(val);
 	}
