@@ -370,6 +370,9 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			#pragma omp parallel for
 			for (int i = 0; i < num_bytes; i++)
 			{
+				// dbg log
+				//std::cout << "Total count of OpenMP threads: " << omp_get_num_threads() << "\n";
+				
 				for (int j = 0; j < num_keys; j++)
 				{
 					// Pearson r correlation with power data
