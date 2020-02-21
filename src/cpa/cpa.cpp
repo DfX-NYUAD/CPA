@@ -43,12 +43,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
-	
-	int pre_row;
-	int pre_col;
-	int post_row;
-	int post_col;
-	int byte_id;
 
 	size_t num_traces;
 	size_t num_pts;
@@ -56,10 +50,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 	float max_pt;
 	float data_pt;
-
-	unsigned char pre_byte;
-	unsigned char post_byte;
-	unsigned char key_byte;
 
 	int candidate;
 
@@ -224,8 +214,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 		// Find ciphertext bytes at different stages for the Hamming 
 		// distance calculation
+		#pragma omp parallel for
 		for (int j = 0; j < num_bytes; j++)
 		{
+			int post_row;
+			int post_col;
+			unsigned char post_byte;
+
 			// Select byte
 			post_row = j / 4;
 			post_col = j % 4;
@@ -235,6 +230,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 			// selected byte
 			for (int k = 0; k < num_keys; k++)
 			{
+				int pre_row;
+				int pre_col;
+				int byte_id;
+				unsigned char pre_byte;
+				unsigned char key_byte;
+
 				// Undo AES-128 operations
 				key_byte = static_cast<unsigned char> (k);
 				aes::shift_rows(post_row, post_col, pre_row, pre_col);
