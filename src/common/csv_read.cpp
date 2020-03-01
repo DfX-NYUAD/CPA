@@ -63,8 +63,92 @@ void csv::split_string_hex(std::string str, std::vector<unsigned char>& out)
 		if (!linestream.eof() && byte[2] != ' ')
 			linestream.unget();
 
-		tmp = std::string("0x" + std::string(byte, 0, 2));
+		// NOTE any re-use of tmp like the commented-out cases below, when being declared outside of this loop, leads to glibc
+		// errors: *** glibc detected *** ../../../build/sca: free(): invalid pointer: [...] ***
+		//
+		//tmp = "test";
+		//tmp = byte;
+		//tmp = std::string("0x" + std::string(byte, 0, 2));
+		//
+		// that is, for g++-7 (GCC) 7.3.1 20180303 (Red Hat 7.3.1-5) 
+		// 	for the following compile commands:
+		// 
+		// cmake -DCMAKE_CXX_COMPILER=g++-7 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-O2" ../src/
+		// 	that is, for CMake Debug builds, from -O2 onward, but not for -O1 or -O0
+		// cmake -DCMAKE_CXX_COMPILER=g++-7 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O0" ../src/
+		// 	versus, for CMake Release builds, already from -O0 onward
+		//
+		//	and for the following libraries:
+		//
+		// linux-vdso.so.1 =>  (0x00007ffdc91db000)
+		// libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00007f0d92b7a000)
+		// libm.so.6 => /lib64/libm.so.6 (0x00007f0d928f6000)
+		// libgomp.so.1 => /usr/lib64/libgomp.so.1 (0x00007f0d926e0000)
+		// libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007f0d924ca000)
+		// libpthread.so.0 => /lib64/libpthread.so.0 (0x00007f0d922ad000)
+		// libc.so.6 => /lib64/libc.so.6 (0x00007f0d91f18000)
+		// /lib64/ld-linux-x86-64.so.2 (0x000055f99ac0c000)
+		// librt.so.1 => /lib64/librt.so.1 (0x00007f0d91d10000)
+		//
+		// Version information:
+		// build/sca:
+		// 	libm.so.6 (GLIBC_2.2.5) => /lib64/libm.so.6
+		// 	libgcc_s.so.1 (GCC_3.0) => /lib64/libgcc_s.so.1
+		// 	ld-linux-x86-64.so.2 (GLIBC_2.3) => /lib64/ld-linux-x86-64.so.2
+		// 	libgomp.so.1 (GOMP_4.0) => /usr/lib64/libgomp.so.1
+		// 	libgomp.so.1 (OMP_1.0) => /usr/lib64/libgomp.so.1
+		// 	libc.so.6 (GLIBC_2.4) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// 	libpthread.so.0 (GLIBC_2.2.5) => /lib64/libpthread.so.0
+		// 	libstdc++.so.6 (GLIBCXX_3.4.9) => /usr/lib64/libstdc++.so.6
+		// 	libstdc++.so.6 (CXXABI_1.3.3) => /usr/lib64/libstdc++.so.6
+		// 	libstdc++.so.6 (CXXABI_1.3) => /usr/lib64/libstdc++.so.6
+		// 	libstdc++.so.6 (GLIBCXX_3.4) => /usr/lib64/libstdc++.so.6
+		// 	libstdc++.so.6 (GLIBCXX_3.4.11) => /usr/lib64/libstdc++.so.6
+		// /usr/lib64/libstdc++.so.6:
+		// 	libm.so.6 (GLIBC_2.2.5) => /lib64/libm.so.6
+		// 	ld-linux-x86-64.so.2 (GLIBC_2.3) => /lib64/ld-linux-x86-64.so.2
+		// 	libgcc_s.so.1 (GCC_4.2.0) => /lib64/libgcc_s.so.1
+		// 	libgcc_s.so.1 (GCC_3.3) => /lib64/libgcc_s.so.1
+		// 	libgcc_s.so.1 (GCC_3.0) => /lib64/libgcc_s.so.1
+		// 	libc.so.6 (GLIBC_2.4) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.3) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.3.2) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// /lib64/libm.so.6:
+		// 	libc.so.6 (GLIBC_PRIVATE) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// /usr/lib64/libgomp.so.1:
+		// 	librt.so.1 (GLIBC_2.2.5) => /lib64/librt.so.1
+		// 	libpthread.so.0 (GLIBC_2.3.4) => /lib64/libpthread.so.0
+		// 	libpthread.so.0 (GLIBC_2.2.5) => /lib64/libpthread.so.0
+		// 	libc.so.6 (GLIBC_2.6) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.4) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.3) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// /lib64/libgcc_s.so.1:
+		// 	libc.so.6 (GLIBC_2.4) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// /lib64/libpthread.so.0:
+		// 	ld-linux-x86-64.so.2 (GLIBC_2.3) => /lib64/ld-linux-x86-64.so.2
+		// 	ld-linux-x86-64.so.2 (GLIBC_2.2.5) => /lib64/ld-linux-x86-64.so.2
+		// 	ld-linux-x86-64.so.2 (GLIBC_PRIVATE) => /lib64/ld-linux-x86-64.so.2
+		// 	libc.so.6 (GLIBC_2.3.2) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_PRIVATE) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// /lib64/libc.so.6:
+		// 	ld-linux-x86-64.so.2 (GLIBC_PRIVATE) => /lib64/ld-linux-x86-64.so.2
+		// 	ld-linux-x86-64.so.2 (GLIBC_2.3) => /lib64/ld-linux-x86-64.so.2
+		// /lib64/librt.so.1:
+		// 	libpthread.so.0 (GLIBC_2.2.5) => /lib64/libpthread.so.0
+		// 	libpthread.so.0 (GLIBC_PRIVATE) => /lib64/libpthread.so.0
+		// 	libc.so.6 (GLIBC_2.3.2) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_2.2.5) => /lib64/libc.so.6
+		// 	libc.so.6 (GLIBC_PRIVATE) => /lib64/libc.so.6
+
+		std::string tmp = std::string("0x" + std::string(byte, 0, 2));
 		//std::cout << tmp << std::endl;
+
 		val = atof(tmp.c_str());
 		out.push_back(val);
 	}
