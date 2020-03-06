@@ -1,0 +1,9 @@
+Settings to run synthesis
+
+1. setenv DESIGN  <top_level_design_name>
+2. setenv CLKNAME <clock_port_name_of_the_design>
+3. setenv SYNTH_LIBRARY<path_to_the_,db_of_library>
+4. setenv TECH  <technology_node>
+5. Replace the file names in analyze.tcl with your design file paths.
+6. Update constraints.tcl as required.
+7. dc_shell-t -no_gui -64bit -x "source -echo -verbose ./run_synth.tcl" -output_log_file ./synth_${DESIGN}_`${now}`.log
