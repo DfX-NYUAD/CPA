@@ -20,7 +20,7 @@ for tech in $tech_list
 do
 	header=$header""$tech","
 	csv_file=$csv_file""$tech"_"
-	power_files=$power_files""$folder"/power_traces_*"$tech"*_key_"$key".txt"" "
+	power_files=$power_files""$folder"/power_traces_*"$tech"_key_"$key".txt"" "
 done
 # finally, drop last delimiter
 header=${header::-1}
