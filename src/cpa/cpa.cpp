@@ -51,8 +51,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	int byte_id;
 
 	size_t num_traces;
-	size_t num_pts;
-	size_t trace_start;
 
 	float max_pt;
 	float data_pt;
@@ -96,7 +94,6 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Record the number of traces and the
 	// number of points per trace
 	num_traces = data.size();
-	num_pts = data.at(0).size();
 
 	// Read in the correct key, if provided 
 	if (key_path != "") {
@@ -197,11 +194,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Consider the maximum power point as the leakage point
 	//
 	// search the whole trace
+	float avg_max_pt = 0.0f;
 	for (unsigned int i = 0; i < num_traces; i++)
 	{
-		trace_start = 0;
 		max_pt = 0.0f;
-		for (unsigned int j = trace_start; j < num_pts; j++)
+		for (unsigned int j = 0; j < data.at(i).size(); j++)
 		{
 			data_pt = data.at(i).at(j);
 			if (max_pt < data_pt)
@@ -209,7 +206,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		}
 	
 		power_pts[i] = max_pt;
+		avg_max_pt += max_pt;
 	}
+	avg_max_pt /= num_traces;
+	std::cout<<"Avg peak power = " << avg_max_pt << std::endl;
 
 	std::cout<<"Calculate Hamming distances...\n";
 	std::cout<<std::endl;
