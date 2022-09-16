@@ -28,6 +28,7 @@
 #include <string>
 #include <cstring>
 #include <chrono>
+#include <omp.h>
 
 #include "common/aes-op.hpp"
 #include "cpa/cpa.hpp"
@@ -65,6 +66,8 @@ int main(int argc, char *argv[])
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
 				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
+				"-threads     Optional: threads used for OpenMP (for correlation calculation)\n"
+				"                if not provided, set to 16\n"
 				"-nv          Optional: non-verbose logging\n"
 				"\n\n";
 
@@ -90,6 +93,7 @@ int main(int argc, char *argv[])
 	int steps = -1;
 	int steps_start = -1;
 	int steps_stop = -1;
+	int threads = -1;
 	// -1 here means that it should not be used
 	float rate_stop = -1;
 	
@@ -176,6 +180,11 @@ int main(int argc, char *argv[])
 			rate_stop = std::stof(argv[i + 1]);
 			i++;
 		}
+		else if (!strcmp(argv[i], "-threads"))
+		{
+			threads = std::stoi(argv[i + 1]);
+			i++;
+		}
 		else 
 		{
 			std::cerr<<std::endl<<argv[i]<<wrong_input_msg;
@@ -218,6 +227,10 @@ int main(int argc, char *argv[])
 	if (steps_start == -1) {
 		steps_start = 1;
 	}
+	if (threads == -1) {
+		threads = 16;
+	}
+	omp_set_num_threads(threads);
 	// rate_stop not be initialized if not provided; -1 here means that it should not be used
 
 	// track start time
