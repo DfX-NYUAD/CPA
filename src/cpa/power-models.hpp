@@ -33,7 +33,7 @@ namespace pm
 // Calculates the Hamming distance between two
 // values and is truncated to a specified number
 // of bits
-inline int Hamming_dist(int num1, int num2, int bits)
+inline int Hamming_dist(int num1, int num2, int bits = 8)
 {
         int x;
 	int ham_dist;
@@ -48,6 +48,19 @@ inline int Hamming_dist(int num1, int num2, int bits)
         }
 
         return ham_dist;
+}
+
+inline int Hamming_weight(unsigned char byte_) {
+
+	std::bitset<8> byte = std::bitset<8>(byte_);
+
+	//// NOTE only the inverse HW model works, i.e., bit 0 considered as HW 1 and bit 1 marked as HW 0 -- possibly some of the AES operations introduces this inversion issue,
+	//// which didn't came to light before when using the HD model...
+	// return (1 * (8 - byte.count())) + (0 * (byte.count()));
+	return (8 - byte.count());
+
+	//// NOTE an example for a more accurate power model -- did not make noticable difference in correlation values for 1st and 2nd candidates --> not needed
+	// return (0.02561 * (byte.count())) + (0.03217 * (8 - byte.count()));
 }
 
 }//end namespace

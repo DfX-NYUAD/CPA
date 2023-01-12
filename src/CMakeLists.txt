@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sca)
 
+set(CMAKE_CXX_COMPILER "g++")
 set(CFLAGS "-std=c++11 -Wall -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CFLAGS}")
 

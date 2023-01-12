@@ -64,11 +64,13 @@ int main(int argc, char *argv[])
 				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
+				"-HW          Optional: use Hamming weight model instead of Hamming distance\n"
 				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
 				"-threads     Optional: threads used for OpenMP (for correlation calculation)\n"
 				"                if not provided, set to 16\n"
 				"-nv          Optional: non-verbose logging\n"
+				"-v           Optional: verbose logging\n"
 				"\n\n";
 
 	const char* wrong_input_msg = " is not recognized as an option\n\n";
@@ -85,8 +87,11 @@ int main(int argc, char *argv[])
 	int ct_path_set = 0;
 
 	bool candidates = false;
-	bool verbose = true;
 	bool key_expansion = true;
+	bool HW = false;
+
+	// -1 indicates non-verbose, 0 indicates regular, and 1 indicates verbose
+	int verbose = 0;
 
 	// -1 indicates that these parameters have not been set yet
 	int permutations = -1;
@@ -147,13 +152,21 @@ int main(int argc, char *argv[])
 		{
 			candidates = true;
 		}
+		else if (!strcmp(argv[i], "-HW"))
+		{
+			HW = true;
+		}
 		else if (!strcmp(argv[i], "-no_key_exp"))
 		{
 			key_expansion = false;
 		}
 		else if (!strcmp(argv[i], "-nv"))
 		{
-			verbose = false;
+			verbose = -1;
+		}
+		else if (!strcmp(argv[i], "-v"))
+		{
+			verbose = 1;
 		}
 		else if (!strcmp(argv[i], "-perm"))
 		{
@@ -239,7 +252,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, perm_path, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
+		cpa::cpa(data_path, ct_path, key_path, perm_path, HW, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
 	//}
 	//else
 	//{
