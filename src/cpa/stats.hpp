@@ -32,21 +32,35 @@
 namespace stats
 {
 
-// Calculates the mean of a given vector
+// Calculates the mean of a given vector, considering only the selected/provided indices
 inline float mean(std::vector<float>& vec, std::vector<unsigned>& indices, int elements)
 {
-	float sum;
-	float mean;
-
-	sum = 0;
+	float sum = 0;
 
 	for (int i = 0; i < elements; i++)
 		sum += vec[indices[i]];
 
-	mean = sum / elements;
-
-	return mean;
+	return (sum / elements);
 };
+
+// Calculates the mean, std dev, var of a given vector
+inline void stats(std::vector<float> const& vec, float& mean, float& std_dev, float& var) {
+
+	// mean
+	mean = 0;
+	for (auto const& i : vec) {
+		mean += i;
+	}
+	mean /= vec.size();
+
+	// var, std dev
+	var = 0;
+	for (auto const& i : vec) {
+		var += std::pow(i - mean, 2.0f);
+	}
+	var /= vec.size();
+	std_dev = std::sqrt(var);
+}
 
 // Calculates the pearson product-moment correlation coefficient
 // of two equally sized vectors
