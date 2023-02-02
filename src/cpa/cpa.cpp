@@ -364,6 +364,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout << std::endl;
 		std::cout << " NICV = " << NICV[j];
 		std::cout << " ; SNR = " << SNR[j];
+		std::cout << " ; (1 / SNR) = " << (1.0f/SNR[j]);
 		std::cout << std::endl;
 
 	} // compute SNR separately for each sub-key, key byte; follows principle of actual attacks
@@ -384,6 +385,18 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 
 		std::cout << " ";
 		std::cout << std::dec << "SNR_med (avg of sorted(SNR[7]), sorted(SNR[8])) = " << (SNR[7] + SNR[8]) / 2.0f;
+		std::cout << std::endl;
+
+		std::cout << " ";
+		std::cout << std::dec << "(1 / SNR_min) = " << (1.0f/SNR[0]);
+		std::cout << std::endl;
+
+		std::cout << " ";
+		std::cout << std::dec << "(1 / SNR_max) = " << (1.0f/SNR[15]);
+		std::cout << std::endl;
+
+		std::cout << " ";
+		std::cout << std::dec << "(1 / SNR_med) = " << (2.0f/(SNR[7] + SNR[8]));
 		std::cout << std::endl;
 
 	std::cout << std::endl;
