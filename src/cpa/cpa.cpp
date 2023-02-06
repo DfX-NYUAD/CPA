@@ -40,7 +40,7 @@
 #include "stats.hpp"
 
 
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool HW, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion)
+void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool HW, bool SNR_flag, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -213,167 +213,170 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	}
 	std::cout<<std::endl;
 			
-	//// TODO NICV, SNR computation
+	//// NICV, SNR computation
+	if (SNR_flag) {
 
-	// metrics to be computed
-	std::vector<float> SNR = std::vector<float>(16, 0.0f);
-	std::vector<float> NICV = std::vector<float>(16, 0.0f);
-	float NICV_; // intermediate variable, not actual NICV
+		std::cout<<"Calculate SNR ...\n";
 
-	// groups for traces; related to partitioning for specific TVLA, NICV
-	std::vector<float> G1 (num_traces, 0.0f);
-	std::vector<float> G2 (num_traces, 0.0f);
+		// metrics to be computed
+		std::vector<float> SNR = std::vector<float>(16, 0.0f);
+		std::vector<float> NICV = std::vector<float>(16, 0.0f);
+		float NICV_; // intermediate variable, not actual NICV
 
-	// stats on whole set of traces
-	float mean, std_dev, var;
-	stats::stats(power_pts, mean, std_dev, var);
+		// groups for traces; related to partitioning for specific TVLA, NICV
+		std::vector<float> G1 (num_traces, 0.0f);
+		std::vector<float> G2 (num_traces, 0.0f);
 
-	// compute NICV, SNR separately for each sub-key, key byte; follows principle of actual attacks
-	for (int j = 0; j < 16; j++) {
+		// stats on whole set of traces
+		float mean, std_dev, var;
+		stats::stats(power_pts, mean, std_dev, var);
 
-		NICV_ = 0;
+		// compute NICV, SNR separately for each sub-key, key byte; follows principle of actual attacks
+		for (int j = 0; j < 16; j++) {
 
-		// for each possible value in a byte
-		for (int k = 0; k < 256; k++) {
+			NICV_ = 0;
 
-			G1.clear();
-			G2.clear();
+			// for each possible value in a byte
+			for (int k = 0; k < 256; k++) {
 
-			// 1) partition traces; for specific TVLA, NICV
-			//
-			for (unsigned int i = 0; i < num_traces; i++) {
+				G1.clear();
+				G2.clear();
 
-				// extract jth byte of relevant intermediate/round
+				// 1) partition traces; for specific TVLA, NICV
+				//
+				for (unsigned int i = 0; i < num_traces; i++) {
 
-				// TODO extract (bytes of) relevant intermediate/round data from file, to be generated
-				// from power sim testbench
+					// extract jth byte of relevant intermediate/round
 
-				// Get cipher for this particular trace
-				for (int l = 0; l < 4; l++)
-					for (int m = 0; m < 4; m++)
-						cipher[m][l] = ciphertext.at(i).at(l * 4 + m);
+					// TODO extract (bytes of) relevant intermediate/round data from file, to be generated
+					// from power sim testbench
 
-				int post_row;
-				int post_col;
-				//unsigned char post_byte;
+					// Get cipher for this particular trace
+					for (int l = 0; l < 4; l++)
+						for (int m = 0; m < 4; m++)
+							cipher[m][l] = ciphertext.at(i).at(l * 4 + m);
 
-				int pre_row;
-				int pre_col;
-				unsigned char pre_byte;
+					int post_row;
+					int post_col;
+					//unsigned char post_byte;
 
-				unsigned char key_byte;
+					int pre_row;
+					int pre_col;
+					unsigned char pre_byte;
 
-				// Select byte
-				post_row = j / 4;
-				post_col = j % 4;
-				//post_byte = cipher[post_row][post_col];
+					unsigned char key_byte;
 
-				// Undo AES-128 operations, using the correct key byte
-				key_byte = correct_round_key[round_key_index][j];
-				aes::shift_rows(post_row, post_col, pre_row, pre_col);
-				pre_byte = cipher[pre_row][pre_col];
-				pre_byte = aes::add_round_key(key_byte, pre_byte);
-				pre_byte = aes::inv_sub_bytes(pre_byte);
+					// Select byte
+					post_row = j / 4;
+					post_col = j % 4;
+					//post_byte = cipher[post_row][post_col];
+
+					// Undo AES-128 operations, using the correct key byte
+					key_byte = correct_round_key[round_key_index][j];
+					aes::shift_rows(post_row, post_col, pre_row, pre_col);
+					pre_byte = cipher[pre_row][pre_col];
+					pre_byte = aes::add_round_key(key_byte, pre_byte);
+					pre_byte = aes::inv_sub_bytes(pre_byte);
+
+					//// dbg
+					//std::cout << "j = " << j;
+					//std::cout << "; ";
+					//std::cout << "k = " << k;
+					//std::cout << "; ";
+					//std::cout << "i = " << i;
+					//std::cout << "; ";
+					//std::cout << "pre_byte = " << std::bitset<8>(pre_byte);
+					//std::cout << std::endl;
+
+					// actual partitioning
+					if (pre_byte == k) {
+						G1.push_back(power_pts[i]);
+					}
+					else {
+						G2.push_back(power_pts[i]);
+					}
+				}
+
+				// sanity check: calculations are only meaningful if also the smaller G1 holds some elements
+				if (G1.empty()) {
+
+					std::cout << "Warning: G1 is empty for byte j = " << j;
+					std::cout << ", ";
+					std::cout << " byte value k = " << k;
+					std::cout << "; ";
+					std::cout << " this indicates that the total number of traces is too small. Skipping this case for NICV, SNR calculations.";
+					std::cout << std::endl;
+
+					continue;
+				}
+
+				// 2) calculate partition statistics
+				//
+				float G1_mean, G1_std_dev, G1_var;
+				float G2_mean, G2_std_dev, G2_var;
+
+				stats::stats(G1, G1_mean, G1_std_dev, G1_var);
+				stats::stats(G2, G2_mean, G2_std_dev, G2_var);
 
 				//// dbg
-				//std::cout << "j = " << j;
+				//std::cout << std::dec << "mean(G1) = " << G1_mean;
 				//std::cout << "; ";
-				//std::cout << "k = " << k;
+				//std::cout << std::dec << "mean(G2) = " << G2_mean;
+				//std::cout << std::endl;
+				//std::cout << std::dec << "std_dev(G1) = " << G1_std_dev;
 				//std::cout << "; ";
-				//std::cout << "i = " << i;
+				//std::cout << std::dec << "std_dev(G2) = " << G2_std_dev;
+				//std::cout << std::endl;
+				//std::cout << std::dec << "|G1| = " << G1.size();
 				//std::cout << "; ";
-				//std::cout << "pre_byte = " << std::bitset<8>(pre_byte);
+				//std::cout << std::dec << "|G2| = " << G2.size();
+				//std::cout << "; ";
+				//std::cout << std::dec << "|G1| + |G2| = " << G1.size() + G2.size();
 				//std::cout << std::endl;
 
-				// actual partitioning
-				if (pre_byte == k) {
-					G1.push_back(power_pts[i]);
-				}
-				else {
-					G2.push_back(power_pts[i]);
-				}
-			}
+				// 3) compute NICV_k; can be computed from TVLA or directly -- here we compute it directly
+				//
+				float NICV_k;
+	//			float TVLA;
+	//
+	//			TVLA = (G1_mean - G2_mean) /
+	//				std::sqrt( ( G1_var / G1.size() ) + ( G2_var / G2.size() ) );
+	//
+	//			// dbg
+	//			std::cout << std::dec << "TVLA = " << TVLA;
+	//			std::cout << std::endl;
 
-			// sanity check: calculations are only meaningful if also the smaller G1 holds some elements
-			if (G1.empty()) {
+				NICV_k =
+					( G1.size() - ( std::pow(G1.size(), 2.0f) / G2.size() ) ) * std::pow(G1_mean - mean, 2.0f)
+					+
+					G2.size() * std::pow(G2_mean - mean, 2.0f)
+				;
 
-				std::cout << "Warning: G1 is empty for byte j = " << j;
-				std::cout << ", ";
-				std::cout << " byte value k = " << k;
-				std::cout << "; ";
-				std::cout << " this indicates that the total number of traces is too small. Skipping this case for NICV, SNR calculations.";
-				std::cout << std::endl;
+				//// dbg
+				//std::cout << std::dec << "NICV_k = " << NICV_k;
+				//std::cout << std::endl;
 
-				continue;
-			}
+				NICV_ += NICV_k;
 
-			// 2) calculate partition statistics
-			//
-			float G1_mean, G1_std_dev, G1_var;
-			float G2_mean, G2_std_dev, G2_var;
+			} // for each possible value in a byte
 
-			stats::stats(G1, G1_mean, G1_std_dev, G1_var);
-			stats::stats(G2, G2_mean, G2_std_dev, G2_var);
+			NICV[j] = NICV_ / (num_traces * var);
+			SNR[j] = 1.0f / ( (1.0f/NICV[j]) - 1.0f );
 
-			//// dbg
-			//std::cout << std::dec << "mean(G1) = " << G1_mean;
-			//std::cout << "; ";
-			//std::cout << std::dec << "mean(G2) = " << G2_mean;
-			//std::cout << std::endl;
-			//std::cout << std::dec << "std_dev(G1) = " << G1_std_dev;
-			//std::cout << "; ";
-			//std::cout << std::dec << "std_dev(G2) = " << G2_std_dev;
-			//std::cout << std::endl;
-			//std::cout << std::dec << "|G1| = " << G1.size();
-			//std::cout << "; ";
-			//std::cout << std::dec << "|G2| = " << G2.size();
-			//std::cout << "; ";
-			//std::cout << std::dec << "|G1| + |G2| = " << G1.size() + G2.size();
-			//std::cout << std::endl;
+			std::cout << std::dec << "Byte j : " << j;
+			std::cout << std::endl;
+			std::cout << " NICV = " << NICV[j];
+			std::cout << " ; SNR = " << SNR[j];
+			std::cout << " ; (1 / SNR) = " << (1.0f/SNR[j]);
+			std::cout << std::endl;
 
-			// 3) compute NICV_k; can be computed from TVLA or directly -- here we compute it directly
-			//
-			float NICV_k;
-//			float TVLA;
-//
-//			TVLA = (G1_mean - G2_mean) /
-//				std::sqrt( ( G1_var / G1.size() ) + ( G2_var / G2.size() ) );
-//
-//			// dbg
-//			std::cout << std::dec << "TVLA = " << TVLA;
-//			std::cout << std::endl;
+		} // compute SNR separately for each sub-key, key byte; follows principle of actual attacks
 
-			NICV_k =
-				( G1.size() - ( std::pow(G1.size(), 2.0f) / G2.size() ) ) * std::pow(G1_mean - mean, 2.0f)
-				+
-				G2.size() * std::pow(G2_mean - mean, 2.0f)
-			;
+		// compute/derive SNR stats from sorted SNR results
+		std::sort(SNR.begin(), SNR.end());
 
-			//// dbg
-			//std::cout << std::dec << "NICV_k = " << NICV_k;
-			//std::cout << std::endl;
-
-			NICV_ += NICV_k;
-
-		} // for each possible value in a byte
-
-		NICV[j] = NICV_ / (num_traces * var);
-		SNR[j] = 1.0f / ( (1.0f/NICV[j]) - 1.0f );
-
-		std::cout << std::dec << "Byte j : " << j;
+		std::cout << "Overall:";
 		std::cout << std::endl;
-		std::cout << " NICV = " << NICV[j];
-		std::cout << " ; SNR = " << SNR[j];
-		std::cout << " ; (1 / SNR) = " << (1.0f/SNR[j]);
-		std::cout << std::endl;
-
-	} // compute SNR separately for each sub-key, key byte; follows principle of actual attacks
-
-	// compute/derive SNR stats from sorted SNR results
-	std::sort(SNR.begin(), SNR.end());
-
-	std::cout << "Overall:";
-	std::cout << std::endl;
 
 		std::cout << " ";
 		std::cout << std::dec << "SNR_min = " << SNR[0];
@@ -399,9 +402,10 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout << std::dec << "(1 / SNR_med) = " << (2.0f/(SNR[7] + SNR[8]));
 		std::cout << std::endl;
 
-	std::cout << std::endl;
-
-	exit(0);
+		std::cout << "Exiting...";
+		std::cout << std::endl;
+		exit(0);
+	}
 			
 	// Calculate Hamming points
 	for (unsigned int i = 0; i < num_traces; i++)

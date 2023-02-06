@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
 				"-HW          Optional: use Hamming weight model instead of Hamming distance\n"
+				"-SNR         Optional: compute SNR (related to TVLA) for power traces\n"
 				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
 				"-threads     Optional: threads used for OpenMP (for correlation calculation)\n"
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
 	bool candidates = false;
 	bool key_expansion = true;
 	bool HW = false;
+	bool SNR = false;
 
 	// -1 indicates non-verbose, 0 indicates regular, and 1 indicates verbose
 	int verbose = 0;
@@ -155,6 +157,10 @@ int main(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-HW"))
 		{
 			HW = true;
+		}
+		else if (!strcmp(argv[i], "-SNR"))
+		{
+			SNR = true;
 		}
 		else if (!strcmp(argv[i], "-no_key_exp"))
 		{
@@ -252,7 +258,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, perm_path, HW, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
+		cpa::cpa(data_path, ct_path, key_path, perm_path, HW, SNR, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
 	//}
 	//else
 	//{
