@@ -204,14 +204,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	avg_max_pt /= num_traces;
 	std::cout << std::dec << "Traces = " << num_traces << std::endl;
 	std::cout << std::dec << "Avg peak power = " << avg_max_pt << std::endl;
-
-	if (HW) {
-		std::cout<<"Calculate Hamming weights...\n";
-	}
-	else {
-		std::cout<<"Calculate Hamming distances...\n";
-	}
-	std::cout<<std::endl;
+	std::cout << std::endl;
 			
 	//// NICV, SNR computation
 	if (SNR_flag) {
@@ -401,11 +394,20 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		std::cout << " ";
 		std::cout << std::dec << "(1 / SNR_med) = " << (2.0f/(SNR[7] + SNR[8]));
 		std::cout << std::endl;
-
-		std::cout << "Exiting...";
 		std::cout << std::endl;
-		exit(0);
+
+	//	std::cout << "Exiting...";
+	//	std::cout << std::endl;
+	//	exit(0);
 	}
+
+	if (HW) {
+		std::cout<<"Calculate Hamming weights...\n";
+	}
+	else {
+		std::cout<<"Calculate Hamming distances...\n";
+	}
+	std::cout<<std::endl;
 			
 	// Calculate Hamming points
 	for (unsigned int i = 0; i < num_traces; i++)
