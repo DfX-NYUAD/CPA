@@ -33,10 +33,22 @@ namespace cpa
 {
 
 // The serial CPU based CPA function
-void cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool HW, bool SNR_flag, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion);
+void cpa(std::string data_path, std::string ct_path, std::string power_model_path, std::string cells_type_path, bool clk_high, std::string key_path, std::string perm_path, bool HW, bool HD, bool SNR_flag, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion);
 
 // The parallel GPU based CPA function
 void pcpa(std::string data_path, std::string ct_path);
+
+// entry in power model
+struct power_table_FF {
+
+	std::string cell;
+
+	bool const CDN = 1; // resetN 
+	bool CP; // clk
+	bool D; // D
+	bool Q; // Q
+	float value; // power value
+};
 
 } //end namespace
 

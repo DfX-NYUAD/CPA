@@ -30,6 +30,9 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <unordered_map>
+
+#include "../cpa/cpa.hpp"
 
 namespace csv
 {
@@ -45,6 +48,13 @@ void read_data(std::string path, std::vector< std::vector<float> >& out);
 
 // Function to read in the hex files (cypher/key)
 void read_hex(std::string path, std::vector< std::vector<unsigned char> >& out);
+
+// Function to read in the power model from both the power model file and the cells type file
+void read_power_model(std::string power_model_path,
+		std::string cells_type_path,
+		bool clk_high,
+		std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > >& power_model // key is state bit index [0..127], value is vector with all power values of related cell
+	);
 
 // Function to read in permutations file
 bool read_perm_file(std::fstream& file,

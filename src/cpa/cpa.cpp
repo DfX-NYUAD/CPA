@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <functional>
 #include <omp.h>
 #include <chrono>
@@ -39,8 +40,8 @@
 #include "power-models.hpp"
 #include "stats.hpp"
 
-
-void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, std::string perm_path, bool HW, bool SNR_flag, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion)
+// (TODO) refactor parameters into struct
+void cpa::cpa(std::string data_path, std::string ct_path, std::string power_model_path, std::string cells_type_path, bool clk_high, std::string key_path, std::string perm_path, bool HW, bool HD, bool SNR_flag, bool candidates, int permutations, int steps, int steps_start, int steps_stop, float rate_stop, int verbose, bool key_expansion)
 {
 	const int num_bytes = 16;
 	const int num_keys = 256;	
@@ -62,12 +63,15 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
 	// Prepare vectors
-	std::vector< std::vector<float> > data;
+	std::vector< std::vector<float> > data; // power traces
 	std::vector< std::vector<unsigned char> > ciphertext;
 	std::vector< std::vector<unsigned char> > correct_key;
 	std::vector< std::vector<unsigned char> > correct_round_key (11, std::vector<unsigned char> (num_bytes));
 	std::vector< std::vector<unsigned char> > cipher (4, std::vector<unsigned char> (4));
-	std::vector< std::vector<unsigned> > perm_from_file;
+	std::vector< std::vector<unsigned int> > perm_from_file;
+
+	// prepare power model
+	std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > > power_model; // key is state bit index [0..127], value is vector with all power values of related cell
 
 	// Print information to terminal
 	//std::cout<<"\n\nMethod of Analysis: CPA";
@@ -85,6 +89,12 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 	// Record the number of traces and the
 	// number of points per trace
 	num_traces = data.size();
+
+	std::cout<<"Reading power model from: " << power_model_path << " and " << cells_type_path;
+	std::cout<<"\n";
+
+	// Read in the power model
+	csv::read_power_model(power_model_path, cells_type_path, clk_high, power_model);
 
 	// Read in the correct key, if provided 
 	if (key_path != "") {
@@ -173,9 +183,9 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string key_path, 
 		( num_bytes, std::vector< std::vector<unsigned int> > 
 		(256, std::vector<unsigned int> (num_traces, 0) ) );
 
-	std::vector<unsigned> trace_indices (num_traces);
+	std::vector<unsigned int> trace_indices (num_traces);
 	// Prepare with all trace indices; required for shuffling/generating permutations in case they are not read in
-	for (unsigned i = 0; i < num_traces; i++) {
+	for (unsigned int i = 0; i < num_traces; i++) {
 		trace_indices[i] = i;
 	}
 

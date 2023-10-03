@@ -46,6 +46,10 @@ int main(int argc, char *argv[])
 	const char* help_msg = "\nOptions:\n\n"
 				"-d           Mandatory: power traces file\n"
 				"-t           Mandatory: cipher texts file\n"
+				"-pm          Mandatory: power model file\n"
+				"-sc          Mandatory: cells type file for all state flip-flops\n"
+				"-clk         Optional: assume clock high/1 for power model look-up\n"
+				"                if not provided, clock low/0 is assumed\n"
 				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
 				"                with the highest-correlation candidate coming last\n"
 				"-steps       Optional: specify the steps size, i.e., the total count of subsets of traces to consider;\n"
@@ -64,7 +68,8 @@ int main(int argc, char *argv[])
 				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
-				"-HW          Optional: use Hamming weight model instead of Hamming distance\n"
+				"-HW          Optional: use Hamming weight model instead of power model\n"
+				"-HD          Optional: use Hamming distance model instead of power model\n"
 				"-SNR         Optional: compute SNR (related to TVLA) for power traces\n"
 				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
@@ -86,10 +91,14 @@ int main(int argc, char *argv[])
 	//int parallel_analysis = 0;
 	int data_path_set = 0;
 	int ct_path_set = 0;
+	int power_model_path_set = 0;
+	int cells_type_path_set = 0;
 
+	bool clk_high = false; // false means clk low
 	bool candidates = false;
 	bool key_expansion = true;
 	bool HW = false;
+	bool HD = false;
 	bool SNR = false;
 
 	// -1 indicates non-verbose, 0 indicates regular, and 1 indicates verbose
@@ -106,6 +115,8 @@ int main(int argc, char *argv[])
 	
 	std::string data_path;
 	std::string ct_path;
+	std::string power_model_path;
+	std::string cells_type_path;
 	std::string key_path = "";
 	std::string perm_path = "";
 
@@ -123,6 +134,18 @@ int main(int argc, char *argv[])
 		{
 			std::cout<<help_msg;
 			return 0;
+		}
+		else if (!strcmp(argv[i], "-pm"))
+		{
+			power_model_path = argv[i + 1];
+			power_model_path_set = 1;
+			i++;
+		}
+		else if (!strcmp(argv[i], "-sc"))
+		{
+			cells_type_path = argv[i + 1];
+			cells_type_path_set = 1;
+			i++;
 		}
 		else if (!strcmp(argv[i], "-d"))
 		{
@@ -154,9 +177,17 @@ int main(int argc, char *argv[])
 		{
 			candidates = true;
 		}
+		else if (!strcmp(argv[i], "-clk"))
+		{
+			clk_high = true;
+		}
 		else if (!strcmp(argv[i], "-HW"))
 		{
 			HW = true;
+		}
+		else if (!strcmp(argv[i], "-HD"))
+		{
+			HD = true;
 		}
 		else if (!strcmp(argv[i], "-SNR"))
 		{
@@ -218,6 +249,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// make sure the user provides the power model file and the cells type file
+	if (!power_model_path_set || !cells_type_path_set)
+	{
+		std::cerr << input_msg;
+		return 1;
+	}
+
 	// make sure the user provides steps to be considered in case a permutations file is provided
 	if ((perm_path != "") && (steps == -1)) {
 
@@ -258,7 +296,7 @@ int main(int argc, char *argv[])
 	//// Decide whether to use the CPU or GPU algorithm
 	//if (!parallel_analysis)
 	//{
-		cpa::cpa(data_path, ct_path, key_path, perm_path, HW, SNR, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
+		cpa::cpa(data_path, ct_path, power_model_path, cells_type_path, clk_high, key_path, perm_path, HW, HD, SNR, candidates, permutations, steps, steps_start, steps_stop, rate_stop, verbose, key_expansion);
 	//}
 	//else
 	//{

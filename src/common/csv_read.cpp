@@ -210,6 +210,81 @@ void csv::read_hex(std::string path, std::vector< std::vector<unsigned char> >& 
 	out.pop_back();
 }
 
+void csv::read_power_model(std::string power_model_path,
+		std::string cells_type_path,
+		bool clk_high,
+		std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > >& power_model // key is state bit index [0..127], value is vector with all power values of related cell
+	)
+{
+	std::ifstream power_model_file;
+	std::ifstream cells_type_file;
+	std::string line;
+	std::string word;
+
+	std::unordered_map<unsigned int, std::string> state_FFs_cells_type; // key: state bit index, value is cells type
+
+	cells_type_file.open(cells_type_path.c_str(), std::ifstream::in);
+	if (!cells_type_file.is_open())
+	{
+		std::cerr<<"\nCould not open: "<<cells_type_path<<"\n\n";
+		exit(1);
+	}
+
+	
+	while (std::getline(cells_type_file, line)) {
+
+		std::istringstream linestream(line);
+
+		// 1st word: state bit
+		linestream >> word;
+
+		bool valid_line = false;
+		for (unsigned int i = 0; i < 128; i++) {
+
+			// check for valid line, as in state bit index is found in 1st word
+			// NOTE signal/net doesn't have to be named state necessarily; only the part w/ the index bit matters
+			if (word.find("[" + std::to_string(i) + "]") == std::string::npos) {
+				continue;
+			}
+
+			// continue parsing
+			valid_line = true;
+
+			// drop 2nd word: " : "
+			linestream >> word;
+
+			// parse 3rd word: cell type, including library name in front
+			linestream >> word;
+
+			// store into helper container
+			state_FFs_cells_type.insert( std::make_pair(i, word) );
+		}
+
+		// invalid line
+		if (!valid_line) {
+			std::cerr << "\nFound an invalid line in the cells type file: \"" << line << "\"\n\n";
+			exit(1);
+		}
+	}
+	cells_type_file.close();
+
+	// sanity check on 128 entries in parsed cells type
+	if (state_FFs_cells_type.size() != 128) {
+
+		std::cerr << "\nInvalid number of entries parsed in the cells type file: parsed " << state_FFs_cells_type.size() << " entries; expected 128 entries\n";
+
+		for (auto const& pair : state_FFs_cells_type) {
+
+			std::cerr << " " << pair.first << " -> " << pair.second << "\n";
+		}
+		std::cerr << "\n";
+
+		exit(1);
+	}
+
+//	power_model.insert( std::make_pair(0, std::vector< cpa::power_table_FF>() ) );
+}
+
 bool csv::read_perm_file(std::fstream& file,
 		int s,
 		int data_pts,
