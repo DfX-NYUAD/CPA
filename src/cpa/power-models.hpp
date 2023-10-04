@@ -70,6 +70,7 @@ inline float power(unsigned char pre_byte_, unsigned char post_byte_, unsigned i
 	float ret = 0;
 
 	// sum up power values for all 8 bits of byte of interest
+	unsigned int i_covered = 0;
 	for (unsigned int i = 0; i < 8; i++) {
 
 		auto key_range = power_model.equal_range((byte_id * 8) + i);
@@ -83,9 +84,15 @@ inline float power(unsigned char pre_byte_, unsigned char post_byte_, unsigned i
 			if (tab.CP == clk_high && tab.D == pre_byte[i] && tab.Q == post_byte[i]) {
 
 				ret += tab.value;
+				i_covered++;
 				break;
 			}
 		}
+	}
+
+	// sanity check
+	if (i_covered != 8) {
+		std::cerr<<"\nError: the power model did not cover all 8 bits of the current byte of interest; only " << i_covered << " bits are covered\n";
 	}
 
 	return ret;
