@@ -71,7 +71,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 	std::vector< std::vector<unsigned int> > perm_from_file;
 
 	// prepare power model
-	std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > > power_model; // key is state bit index [0..127], value is vector with all power values of related cell
+	std::unordered_multimap< unsigned int, cpa::power_table_FF > power_model; // key is state bit index [0..127], value_s_ (multimap) are all power values of related cell
 
 	// Print information to terminal
 	//std::cout<<"\n\nMethod of Analysis: CPA";
@@ -95,6 +95,29 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 
 	// Read in the power model
 	csv::read_power_model(power_model_path, cells_type_path, clk_high, power_model);
+
+//	// dbg
+//	for (unsigned int i = 0; i < 128; i++) {
+//
+//		std::cout << "State Bit: " << i;
+//		std::cout << std::endl;
+//
+//
+//		std::cout << " Related power table:\n";
+//
+//		auto key_range = power_model.equal_range(i);
+//		for (auto iter = key_range.first; iter != key_range.second; ++iter) {
+//
+//			std::cout << "  Cell: " << iter->second.cell << "\n";
+//			std::cout << "   CDN: " << iter->second.CDN << "\n";
+//			std::cout << "   CP: " << iter->second.CP << "\n";
+//			std::cout << "   D: " << iter->second.D << "\n";
+//			std::cout << "   Q: " << iter->second.Q << "\n";
+//			std::cout << "   Value: " << iter->second.value << "\n";
+//		}
+//
+//		std::cout << std::endl;
+//	}
 
 	// Read in the correct key, if provided 
 	if (key_path != "") {

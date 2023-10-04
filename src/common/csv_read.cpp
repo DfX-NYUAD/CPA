@@ -213,13 +213,20 @@ void csv::read_hex(std::string path, std::vector< std::vector<unsigned char> >& 
 void csv::read_power_model(std::string power_model_path,
 		std::string cells_type_path,
 		bool clk_high,
-		std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > >& power_model // key is state bit index [0..127], value is vector with all power values of related cell
+		std::unordered_multimap< unsigned int, cpa::power_table_FF >& power_model // key is state bit index [0..127], value_s_ (multimap) are all power values of related cell
 	)
 {
 	std::ifstream power_model_file;
 	std::ifstream cells_type_file;
 	std::string line;
 	std::string word;
+
+	//
+	// step 1: handle cells_type_file
+	//
+	// example line:
+	// 	state[99] :   tcbn28hpcplusbwp30p140hvttt0p9v25c_ccs/DFCNQD1BWP30P140HVT 
+	//
 
 	std::unordered_map<unsigned int, std::string> state_FFs_cells_type; // key: state bit index, value is cells type
 
@@ -242,7 +249,8 @@ void csv::read_power_model(std::string power_model_path,
 		for (unsigned int i = 0; i < 128; i++) {
 
 			// check for valid line, as in state bit index is found in 1st word
-			// NOTE signal/net doesn't have to be named state necessarily; only the part w/ the index bit matters
+			//
+			// NOTE signal/net doesn't have to be named `state' necessarily; only the part w/ the index bit matters
 			if (word.find("[" + std::to_string(i) + "]") == std::string::npos) {
 				continue;
 			}
@@ -253,7 +261,7 @@ void csv::read_power_model(std::string power_model_path,
 			// drop 2nd word: " : "
 			linestream >> word;
 
-			// parse 3rd word: cell type, including library name in front
+			// parse 3rd word: cell type, w/ lib name as prefix
 			linestream >> word;
 
 			// store into helper container
@@ -282,7 +290,112 @@ void csv::read_power_model(std::string power_model_path,
 		exit(1);
 	}
 
-//	power_model.insert( std::make_pair(0, std::vector< cpa::power_table_FF>() ) );
+	//
+	// step 2: handle power_model_file
+	//
+	// example line:
+	// 	DFCNQD1BWP30P140HVT -- CDN=1,CP=0,D=0,Q=0 -- 1.014910 
+	//
+
+	std::vector<cpa::power_table_FF> power_table;
+
+	power_model_file.open(power_model_path.c_str(), std::ifstream::in);
+	if (!power_model_file.is_open())
+	{
+		std::cerr<<"\nCould not open: "<<power_model_path<<"\n\n";
+		exit(1);
+	}
+
+	
+	while (std::getline(power_model_file, line)) {
+
+		std::istringstream linestream(line);
+
+		cpa::power_table_FF new_tab;
+
+		// 1st word: cell type, w/o lib name as prefix
+		linestream >> word;
+		new_tab.cell = word;
+
+		// drop 2nd word: " -- "
+		linestream >> word;
+
+		// 3rd word: data conditions for that power value to apply
+		linestream >> word;
+
+		// parse data conditions
+		if (word.find("CDN=1") != std::string::npos) {
+			new_tab.CDN = true;
+		}
+		else {
+			new_tab.CDN = false;
+		}
+		if (word.find("CP=1") != std::string::npos) {
+			new_tab.CP = true;
+		}
+		else {
+			new_tab.CP = false;
+		}
+		if (word.find("D=1") != std::string::npos) {
+			new_tab.D = true;
+		}
+		else {
+			new_tab.D = false;
+		}
+		if (word.find("Q=1") != std::string::npos) {
+			new_tab.Q = true;
+		}
+		else {
+			new_tab.Q = false;
+		}
+
+		// drop 4th word: " -- "
+		linestream >> word;
+
+		// 5th word: power value
+		linestream >> word;
+		new_tab.value = std::stof(word);
+
+		// save tab
+		power_table.emplace_back(new_tab);
+	}
+	power_model_file.close();
+
+//	// dbg
+//	for (auto const& tab : power_table) {
+//
+//		std::cout << "Entry in power table:\n";
+//
+//		std::cout << " Cell: " << tab.cell << "\n";
+//		std::cout << " CDN: " << tab.CDN << "\n";
+//		std::cout << " CP: " << tab.CP << "\n";
+//		std::cout << " D: " << tab.D << "\n";
+//		std::cout << " Q: " << tab.Q << "\n";
+//		std::cout << " Value: " << tab.value << "\n";
+//
+//		std::cout << std::endl;
+//	}
+
+	//
+	// step 3: merge data from both power model and cells type files into actual power_model container
+	//
+
+	for (unsigned int i = 0; i < 128; i++) {
+
+		std::string const& state_FF_cell_type_w_lib_prefix = state_FFs_cells_type.find(i)->second;
+
+		for (auto tab : power_table) {
+
+			// skip all entries in power table which don't match w/ the current state bit's FF
+			//
+			if (state_FF_cell_type_w_lib_prefix.find(tab.cell) == std::string::npos) {
+				continue;
+			}
+
+			// else, store a copy (since we have `auto tab' above, w/o ref or pointer use) of the entry along with the state bit in the actual power_model container
+			power_model.insert( std::make_pair(i, tab) );
+		}
+	}
 }
 
 bool csv::read_perm_file(std::fstream& file,

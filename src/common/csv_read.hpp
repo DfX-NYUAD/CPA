@@ -53,7 +53,7 @@ void read_hex(std::string path, std::vector< std::vector<unsigned char> >& out);
 void read_power_model(std::string power_model_path,
 		std::string cells_type_path,
 		bool clk_high,
-		std::unordered_multimap< unsigned int, std::vector< cpa::power_table_FF > >& power_model // key is state bit index [0..127], value is vector with all power values of related cell
+		std::unordered_multimap< unsigned int, cpa::power_table_FF >& power_model // key is state bit index [0..127], value_s_ (multimap) are all power values of related cell
 	);
 
 // Function to read in permutations file

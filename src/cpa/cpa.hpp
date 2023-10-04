@@ -43,7 +43,7 @@ struct power_table_FF {
 
 	std::string cell;
 
-	bool const CDN = 1; // resetN 
+	bool CDN; // resetN 
 	bool CP; // clk
 	bool D; // D
 	bool Q; // Q
