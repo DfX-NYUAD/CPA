@@ -437,8 +437,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 	if (HW) {
 		std::cout<<"Calculate Hamming weights...\n";
 	}
-	else {
+	else if (HD) {
 		std::cout<<"Calculate Hamming distances...\n";
+	}
+	else {
+		std::cout<<"Calculate power-model distances...\n";
 	}
 	std::cout<<std::endl;
 			
@@ -468,7 +471,7 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 			{
 				int pre_row;
 				int pre_col;
-				int byte_id;
+				unsigned int byte_id;
 				unsigned char pre_byte;
 				unsigned char key_byte;
 
@@ -484,9 +487,11 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 				if (HW) {
 					Hamming_pts[byte_id][k][i] = pm::Hamming_weight(pre_byte);
 				}
-				else {
-					// Find the Hamming distance between the bytes
+				else if (HD) {
 					Hamming_pts[byte_id][k][i] = pm::Hamming_dist(pre_byte, post_byte);
+				}
+				else {
+					Hamming_pts[byte_id][k][i] = pm::power(pre_byte, post_byte, byte_id, power_model, clk_high);
 				}
 
 				//std::cout << "pre_byte:  " << std::bitset<8>(pre_byte) << std::endl;

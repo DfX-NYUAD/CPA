@@ -63,6 +63,34 @@ inline int Hamming_weight(unsigned char byte_) {
 	// return (0.02561 * (byte.count())) + (0.03217 * (8 - byte.count()));
 }
 
+inline float power(unsigned char pre_byte_, unsigned char post_byte_, unsigned int byte_id, std::unordered_multimap< unsigned int, cpa::power_table_FF > const& power_model, bool clk_high) {
+
+	std::bitset<8> pre_byte = std::bitset<8>(pre_byte_);
+	std::bitset<8> post_byte = std::bitset<8>(post_byte_);
+	float ret = 0;
+
+	// sum up power values for all 8 bits of byte of interest
+	for (unsigned int i = 0; i < 8; i++) {
+
+		auto key_range = power_model.equal_range((byte_id * 8) + i);
+
+		for (auto iter = key_range.first; iter != key_range.second; ++iter) {
+
+			auto const& tab = iter->second;
+
+			// only consider the entry in the power model where data conditions match
+			//
+			if (tab.CP == clk_high && tab.D == pre_byte[i] && tab.Q == post_byte[i]) {
+
+				ret += tab.value;
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
+
 }//end namespace
 
 #endif
