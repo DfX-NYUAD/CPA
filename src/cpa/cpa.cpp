@@ -494,11 +494,14 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 					Hamming_pts[byte_id][k][i] = pm::power(pre_byte, post_byte, byte_id, power_model, clk_high);
 				}
 
-				//std::cout << "pre_byte:  " << std::bitset<8>(pre_byte) << std::endl;
-				//std::cout << "post_byte: " << std::bitset<8>(post_byte) << std::endl;
-				//std::cout << "HD:        " << Hamming_pts[byte_id][k][i] << std::endl;
-				//std::cout << "1s in pre_byte: " << std::bitset<8>(pre_byte).count() << std::endl;
-				//std::cout << "0s in pre_byte: " << 8 - std::bitset<8>(pre_byte).count() << std::endl;
+//				// dbg
+//				std::cout << "byte_id: " << byte_id << std::endl;
+//				std::cout << "pre_byte:  " << std::bitset<8>(pre_byte) << std::endl;
+//				std::cout << "post_byte: " << std::bitset<8>(post_byte) << std::endl;
+//				std::cout << "HD:        " << Hamming_pts[byte_id][k][i] << std::endl;
+//				std::cout << "1s in pre_byte: " << std::bitset<8>(pre_byte).count() << std::endl;
+//				std::cout << "0s in pre_byte: " << 8 - std::bitset<8>(pre_byte).count() << std::endl;
+//				std::cout << std::endl;
 
 				// also track the 0->1 and 1->0 flips
 				Hamming_pts__0_1_flips[byte_id][k][i] = 0;
