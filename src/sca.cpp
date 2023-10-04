@@ -46,8 +46,16 @@ int main(int argc, char *argv[])
 	const char* help_msg = "\nOptions:\n\n"
 				"-d           Mandatory: power traces file\n"
 				"-t           Mandatory: cipher texts file\n"
-				"-pm          Mandatory: power model file\n"
-				"-sc          Mandatory: cells type file for all state flip-flops\n"
+				"-HD          Optional: use Hamming distance model\n"
+				"                if not provided, HW and power model are checked for\n"
+				"-HW          Optional: use Hamming weight model\n"
+				"                if not provided, power model is checked for\n"
+				"-pm          Optional: power model file\n"
+				"                if provided, requires -sc as well then\n"
+				"                if not provided, fall-back default is HD model\n"
+				"-sc          Optional: cells type file for all state flip-flops\n"
+				"                if provided, requires -pm as well then\n"
+				"                if not provided, fall-back default is HD model\n"
 				"-clk         Optional: assume clock high/1 for power model look-up\n"
 				"                if not provided, clock low/0 is assumed\n"
 				"-candidates  Optional: print all key candidates, ordered by their correlation values,\n"
@@ -68,8 +76,6 @@ int main(int argc, char *argv[])
 				"                if not found, random permutations are generated and written out to the file;\n"
 				"-k           Optional: correct key file\n"
 				"                if not provided, the success rate across the subsets and permutations cannot be calculated\n"
-				"-HW          Optional: use Hamming weight model instead of power model\n"
-				"-HD          Optional: use Hamming distance model instead of power model\n"
 				"-SNR         Optional: compute SNR (related to TVLA) for power traces\n"
 				"-no_key_exp  Optional: don't apply key expansion, just use the provided key as correct round-10 key\n"
 				//"-p           Optional: use parallel analysis (requires GPU)\n"
@@ -249,8 +255,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// make sure the user provides the power model file and the cells type file
-	if (!power_model_path_set || !cells_type_path_set)
+	// make sure the user provides the power model file and the cells type file together, if any
+	if ((power_model_path_set && !cells_type_path_set) || (cells_type_path_set && !power_model_path_set))
 	{
 		std::cerr << input_msg;
 		return 1;
@@ -283,6 +289,9 @@ int main(int argc, char *argv[])
 	}
 	if (steps_start == -1) {
 		steps_start = 1;
+	}
+	if (!power_model_path_set && !cells_type_path_set && !HW && !HD) {
+		HD = true;
 	}
 	if (threads == -1) {
 		threads = 16;

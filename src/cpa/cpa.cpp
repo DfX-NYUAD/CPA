@@ -90,11 +90,13 @@ void cpa::cpa(std::string data_path, std::string ct_path, std::string power_mode
 	// number of points per trace
 	num_traces = data.size();
 
-	std::cout<<"Reading power model from: " << power_model_path << " and " << cells_type_path;
-	std::cout<<"\n";
+	if (power_model_path != "") {
+		std::cout<<"Reading power model from: " << power_model_path << " and " << cells_type_path;
+		std::cout<<"\n";
 
-	// Read in the power model
-	csv::read_power_model(power_model_path, cells_type_path, clk_high, power_model);
+		// Read in the power model
+		csv::read_power_model(power_model_path, cells_type_path, clk_high, power_model);
+	}
 
 //	// dbg
 //	for (unsigned int i = 0; i < 128; i++) {
